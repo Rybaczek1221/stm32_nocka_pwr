@@ -44,11 +44,12 @@ int main(void)
     uint32_t game_started = 0U;
 
     board_init();
+    led_matrix_init();
+    led_matrix_startup_signal();
     tft_init();
     /* Visible hardware checkpoint: before pressing SW the whole TFT is blue. */
     tft_fill_screen(TFT_BLUE);
     joystick_init();
-    led_matrix_init();
 
     for (;;)
     {
