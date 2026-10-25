@@ -19,6 +19,9 @@ static void spi_write(uint8_t value)
     while ((SPI2->SR & (1UL << 7)) != 0U)
     {
     }
+    while ((SPI2->SR & (1UL << 1)) == 0U)
+    {
+    }
 }
 
 static void tft_command(uint8_t command)

@@ -20,6 +20,11 @@ void game_init(void)
 
 void game_update(JoystickState state)
 {
+    if (state.direction == JOY_CENTER)
+    {
+        return;
+    }
+
     tft_fill_rect(previous_x - 2U, previous_y - 2U, 5U, 5U, TFT_BLACK);
 
     if (state.direction == JOY_UP || state.direction == JOY_UP_LEFT ||
