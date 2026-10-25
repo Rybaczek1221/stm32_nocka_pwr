@@ -64,7 +64,7 @@ nocka_pwr/
 | Pin joysticka | STM32L476RG | Funkcja |
 |---|---|---|
 | GND | GND | masa |
-| +5V / VCC | 3V3 | zasilanie modułu bezpieczne dla ADC |
+| +5V / VCC | szyna 3V3 na płytce stykowej | zasilanie modułu napięciem bezpiecznym dla ADC |
 | VRx | PA0 / A0 | ADC, oś X |
 | VRy | PA1 / A1 | ADC, oś Y |
 | SW | PB0 | wejście z pull-up, aktywne stanem niskim |
@@ -73,6 +73,28 @@ nocka_pwr/
 
 Każda dioda musi mieć własny rezystor szeregowy, np. 330 ohm. Anoda idzie
 przez rezystor do GPIO, a katoda do GND.
+
+### Jak rozdzielić zasilanie 3V3
+
+Napis `+5V` na module joysticka jest nazwą jego pinu zasilania, a nie
+zaleceniem dla tego projektu. Ponieważ `VRx` i `VRy` są podłączone
+bezpośrednio do wejść ADC STM32, moduł joysticka zasilamy napięciem **3,3 V**.
+Podanie 5 V mogłoby uszkodzić wejścia analogowe mikrokontrolera.
+
+Nie potrzebujesz osobnego pinu 3V3 dla każdego elementu. Wykonaj jedną
+wspólną szynę zasilania na płytce stykowej:
+
+1. `3V3` z Nucleo podłącz jednym przewodem do czerwonej szyny zasilania
+   płytki stykowej.
+2. `GND` z Nucleo podłącz do niebieskiej szyny masy.
+3. Z czerwonej szyny 3V3 zasil joystick oraz pin `VCC` TFT.
+4. Pin `BL` TFT pozostaw niepodłączony zgodnie z
+   [DISPLAY_ST7735S.md](./DISPLAY_ST7735S.md).
+5. Wszystkie masy podłącz do wspólnej szyny GND.
+
+To jest połączenie równoległe: jeden dostępny pin `3V3` z Nucleo zasila
+kilka modułów przez szynę płytki stykowej. Nie łącz `3V3` z `5V` i nie
+podłączaj zasilania joysticka do pinu `5V`.
 
 | Pozycja | GPIO |
 |---|---|
