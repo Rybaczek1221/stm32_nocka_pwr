@@ -127,8 +127,8 @@ nie działa.
 ### Test A — kontrola połączeń
 
 1. Odłącz USB od Nucleo.
-2. Podłącz TFT dokładnie według `DISPLAY_ST7735S.md`, w tym `BL -> 3V3`
-   na czas testu podświetlenia.
+2. Podłącz TFT dokładnie według `DISPLAY_ST7735S.md`; `BL` pozostaw
+   niepodłączone.
 3. Sprawdź wzrokowo, czy `VCC` nie jest zwarte z `GND`.
 4. Dołącz joystick i LED-y dopiero po sprawdzeniu TFT.
 
