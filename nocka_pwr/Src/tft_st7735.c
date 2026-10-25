@@ -1,9 +1,9 @@
 #include "hw.h"
 #include "tft_st7735.h"
 
-#define TFT_CS_PIN 6U
-#define TFT_DC_PIN 7U
-#define TFT_RST_PIN 8U
+#define TFT_CS_PIN 12U
+#define TFT_DC_PIN 11U
+#define TFT_RST_PIN 2U
 
 #define TFT_CS_LOW()  gpio_write(GPIOB, TFT_CS_PIN, 0U)
 #define TFT_CS_HIGH() gpio_write(GPIOB, TFT_CS_PIN, 1U)
@@ -12,14 +12,14 @@
 
 static void spi_write(uint8_t value)
 {
-    while ((SPI1->SR & (1UL << 1)) == 0U)
+    while ((SPI2->SR & (1UL << 1)) == 0U)
     {
     }
-    SPI1->DR = value;
-    while ((SPI1->SR & (1UL << 0)) == 0U)
+    SPI2->DR = value;
+    while ((SPI2->SR & (1UL << 0)) == 0U)
     {
     }
-    (void)SPI1->DR;
+    (void)SPI2->DR;
 }
 
 static void tft_command(uint8_t command)
@@ -75,10 +75,10 @@ void tft_init(void)
     TFT_DC_DATA();
     gpio_write(GPIOB, TFT_RST_PIN, 1U);
 
-    RCC->APB2ENR |= RCC_APB2_SPI1EN;
-    SPI1->CR1 = (1UL << 2) | (1UL << 8) | (1UL << 9);
-    SPI1->CR1 |= 5UL << 3; /* 16 MHz / 32 = 500 kHz during first test. */
-    SPI1->CR1 |= 1UL << 6;
+    RCC->APB1ENR1 |= RCC_APB1_SPI2EN;
+    SPI2->CR1 = (1UL << 2) | (1UL << 8) | (1UL << 9);
+    SPI2->CR1 |= 2UL << 3; /* 16 MHz / 8 = 2 MHz during first test. */
+    SPI2->CR1 |= 1UL << 6;
 
     gpio_write(GPIOB, TFT_RST_PIN, 0U);
     delay_ms(20U);

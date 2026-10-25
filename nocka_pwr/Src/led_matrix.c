@@ -9,9 +9,9 @@ typedef struct
 
 static const LedPin leds[9] =
 {
-    {GPIOB, 1U}, {GPIOB, 2U}, {GPIOB, 10U},
-    {GPIOB, 11U}, {GPIOB, 12U}, {GPIOB, 13U},
-    {GPIOB, 14U}, {GPIOB, 15U}, {GPIOC, 6U}
+    {GPIOB, 1U}, {GPIOB, 6U}, {GPIOB, 7U},
+    {GPIOB, 8U}, {GPIOB, 9U}, {GPIOC, 6U},
+    {GPIOC, 7U}, {GPIOC, 8U}, {GPIOC, 9U}
 };
 
 void led_matrix_init(void)

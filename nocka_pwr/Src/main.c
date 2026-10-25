@@ -8,8 +8,8 @@ static void board_init(void)
 {
     RCC->AHB2ENR |= RCC_AHB2_GPIOAEN | RCC_AHB2_GPIOBEN |
                     RCC_AHB2_GPIOCEN;
-    gpio_set_alternate5(GPIOA, 5U); /* SPI1_SCK; LD2 is not used in this build. */
-    gpio_set_alternate5(GPIOA, 7U); /* SPI1_MOSI. */
+    gpio_set_alternate5(GPIOB, 10U); /* SPI2_SCK. */
+    gpio_set_alternate5(GPIOC, 3U);  /* SPI2_MOSI. */
 }
 
 int main(void)

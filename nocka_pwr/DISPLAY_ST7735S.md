@@ -37,7 +37,9 @@ Planowana konfiguracja rejestrów:
 - kolejność bitów: MSB first
 - preskaler: `8`
 - NSSP: wyłączone
-- przewidywana częstotliwość transmisji: około `10 MHz` przy zegarze SPI2 równym `80 MHz`
+- częstotliwość pierwszego testu: około `2 MHz` przy domyślnym HSI16
+- po przejściu testów można podnieść częstotliwość po konfiguracji szybszego
+  zegara systemowego i sprawdzeniu jakości przewodów
 - `CS` obsługiwany programowo przez `PB12`
 
 ## Plan biblioteki

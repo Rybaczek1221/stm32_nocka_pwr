@@ -76,14 +76,14 @@ typedef struct
 #define GPIOB ((GPIO_TypeDef *)0x48000400UL)
 #define GPIOC ((GPIO_TypeDef *)0x48000800UL)
 #define RCC   ((RCC_TypeDef *)0x40021000UL)
-#define SPI1  ((SPI_TypeDef *)0x40013000UL)
+#define SPI2  ((SPI_TypeDef *)0x40003800UL)
 #define ADC1  ((ADC_TypeDef *)0x50040000UL)
 
 #define RCC_AHB2_GPIOAEN (1UL << 0)
 #define RCC_AHB2_GPIOBEN (1UL << 1)
 #define RCC_AHB2_GPIOCEN (1UL << 2)
 #define RCC_AHB2_ADCEN  (1UL << 13)
-#define RCC_APB2_SPI1EN (1UL << 12)
+#define RCC_APB1_SPI2EN (1UL << 14)
 
 void delay_cycles(volatile uint32_t cycles);
 void delay_ms(uint32_t milliseconds);
