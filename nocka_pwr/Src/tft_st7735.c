@@ -20,6 +20,9 @@ static void spi_write(uint8_t value)
     {
     }
     (void)SPI2->DR;
+    while ((SPI2->SR & (1UL << 7)) != 0U)
+    {
+    }
 }
 
 static void tft_command(uint8_t command)
@@ -94,6 +97,11 @@ void tft_init(void)
 
     RCC->APB1ENR1 |= RCC_APB1_SPI2EN;
     SPI2->CR1 = 0U;
+    /*
+     * STM32L4 SPI data size is configured in CR2. Set an explicit 8-bit
+     * frame and FIFO threshold so the driver does not depend on reset state.
+     */
+    SPI2->CR2 = (7UL << 8) | (1UL << 12);
     SPI2->CR1 = (1UL << 2)       /* Master mode. */
               | (2UL << 3)       /* HSI16 / 8 = about 2 MHz. */
               | (1UL << 8)       /* Software NSS management. */
