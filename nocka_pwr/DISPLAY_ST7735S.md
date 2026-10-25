@@ -6,7 +6,8 @@ Dokument opisuje podłączenie wyświetlacza używanego w 11. części kursu STM
 
 - moduł Waveshare TFT LCD 1,8"
 - sterownik: **ST7735S**
-- rozdzielczość: **128 × 160 pikseli**
+- rozdzielczość matrycy: **128 × 160 pikseli**
+- orientacja programu z kursu: **160 × 128 pikseli**
 - interfejs: **SPI, tylko transmisja do wyświetlacza**
 - zasilanie: **3,3 V**
 

@@ -9,7 +9,8 @@ budujemy pojazdu. Tworzymy demo gry:
 - joystick analogowy steruje żółtym punktem na TFT,
 - dziewięć diod LED pokazuje kierunek wychylenia joysticka w układzie 3x3,
 - przycisk joysticka będzie później zdarzeniem gry,
-- TFT Waveshare 1.8" 128x160 ze ST7735S pokazuje obszar gry.
+- TFT Waveshare 1.8" ze ST7735S pokazuje obszar gry w orientacji
+  `160x128`, zgodnie z konfiguracją z kursu FORBOT.
 
 Szczegółowe przewody wyświetlacza są w
 [DISPLAY_ST7735S.md](./DISPLAY_ST7735S.md). Ten plik jest punktem odniesienia

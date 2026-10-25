@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define TFT_WIDTH  128U
-#define TFT_HEIGHT 160U
+#define TFT_WIDTH  160U
+#define TFT_HEIGHT 128U
 
 #define TFT_BLACK 0x0000U
 #define TFT_WHITE 0xFFFFU
