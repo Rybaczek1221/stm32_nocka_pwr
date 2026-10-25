@@ -74,6 +74,11 @@ nocka_pwr/
 Każda dioda musi mieć własny rezystor szeregowy, np. 330 ohm. Anoda idzie
 przez rezystor do GPIO, a katoda do GND.
 
+Wbudowana zielona dioda LD2 na płytce NUCLEO pozostaje podłączona do `PA5`.
+Po resecie programu właśnie ona miga trzy razy jako sygnalizacja uruchomienia
+programu. Zewnętrzne diody 3x3 służą wyłącznie do wskazywania kierunku
+joysticka po uruchomieniu gry.
+
 ### Jak rozdzielić zasilanie 3V3
 
 Napis `+5V` na module joysticka jest nazwą jego pinu zasilania, a nie

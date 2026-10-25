@@ -15,9 +15,15 @@ static const LedPin leds[9] =
     {GPIOC, 7U}, {GPIOC, 8U}, {GPIOC, 9U}
 };
 
+#define BOARD_LED_PIN 5U
+
 void led_matrix_init(void)
 {
     uint32_t index;
+
+    /* LD2 on the NUCLEO-L476RG is the user LED connected to PA5. */
+    gpio_set_output(GPIOA, BOARD_LED_PIN);
+    gpio_write(GPIOA, BOARD_LED_PIN, 0U);
 
     for (index = 0U; index < 9U; ++index)
     {
@@ -53,24 +59,14 @@ void led_matrix_all(uint32_t on)
 
 void led_matrix_startup_signal(void)
 {
-    static const JoystickDirection sequence[] =
-    {
-        JOY_UP_LEFT, JOY_UP, JOY_UP_RIGHT,
-        JOY_RIGHT, JOY_DOWN_RIGHT, JOY_DOWN,
-        JOY_DOWN_LEFT, JOY_LEFT, JOY_CENTER
-    };
     uint32_t index;
 
-    led_matrix_all(1U);
-    delay_ms(250U);
-    led_matrix_all(0U);
-    delay_ms(150U);
-
-    for (index = 0U; index < 9U; ++index)
+    /* Use the built-in NUCLEO LED as the programming/startup indicator. */
+    for (index = 0U; index < 3U; ++index)
     {
-        led_matrix_show(sequence[index]);
-        delay_ms(80U);
+        gpio_write(GPIOA, BOARD_LED_PIN, 1U);
+        delay_ms(150U);
+        gpio_write(GPIOA, BOARD_LED_PIN, 0U);
+        delay_ms(150U);
     }
-
-    led_matrix_all(0U);
 }
