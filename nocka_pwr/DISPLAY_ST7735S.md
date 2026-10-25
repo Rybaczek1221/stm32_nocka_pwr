@@ -23,9 +23,11 @@ Wyświetlacz nie udostępnia linii MISO, więc mikrokontroler nie może odczytyw
 | `CS` | `PB12` | ręcznie sterowany wybór układu |
 | `DC` | `PB11` | dane (`1`) albo komenda (`0`) |
 | `RST` | `PB2` | reset sterownika |
-| `BL` | nie podłączać | podświetlenie włączone przez moduł |
+| `BL` | `3V3` | podświetlenie modułu podczas testów |
 
-Przed podłączeniem należy wyłączyć zasilanie płytki. Nie podawać 5 V na `VCC` ani na linie sygnałowe.
+Przed podłączeniem należy wyłączyć zasilanie płytki. Nie podawać 5 V na
+`VCC`, `BL` ani na linie sygnałowe. Jeśli podświetlenie działa bez przewodu
+`BL`, nadal można je pozostawić podłączone do `3V3` w pierwszym teście.
 
 ## Konfiguracja SPI2
 
