@@ -1,34 +1,32 @@
-# Projekt sterownika pojazdu i mini gry
+# Projekt gry joystickiem i wskaźnika kierunku
 
 ## 1. Cel projektu
 
 Projekt jest realizowany na płytce **NUCLEO-L476RG** z mikrokontrolerem
 **STM32L476RG** oraz elementach z zestawu FORBOT STM32L4.
 
-Docelowo program ma połączyć:
+Pierwsza wersja programu łączy:
 
 - kolorowy wyświetlacz TFT Waveshare 1.8" 128x160 ze sterownikiem ST7735S,
 - analogowy joystick dwuosiowy z przyciskiem,
 - diody LED pokazujące kierunek wychylenia joysticka,
 - prostą grę sterowaną joystickiem,
-- w dalszym etapie czujniki I2C, np. MPU6050 i APDS-9960,
-- elementy sterujące pojazdem, np. mostek H i silniki.
+- wskaźnik położenia joysticka na dziewięciu diodach LED.
 
-Pierwszym celem nie jest jeszcze kompletna gra, ale podział projektu na
-czytelne moduły i sprawdzenie kolejno każdego elementu sprzętowego.
+Nie realizujemy teraz sterownika pojazdu. Najpierw powstaje uporządkowane
+demo gry: joystick przesuwa punkt na TFT, a układ LED 3x3 pokazuje aktualny
+kierunek wychylenia.
 
 ## 2. Plan kolejnych etapów
 
-1. Sprawdzenie uruchamiania mikrokontrolera i diody LD2.
-2. Odczyt przycisku użytkownika B1 z programowym debounce'em.
-3. Uruchomienie SPI1 i test komunikacji z TFT.
-4. Inicjalizacja sterownika ST7735S i wyświetlenie jednolitego koloru.
-5. Dodanie podstawowych funkcji graficznych: punkt, prostokąt, tekst.
-6. Odczyt osi joysticka przez ADC oraz odczyt przycisku SW.
-7. Wskaźnik położenia joysticka na diodach LED w układzie 3x3.
-8. Demo: poruszany punkt lub pojazd na ekranie TFT.
-9. Prosta gra, np. omijanie przeszkód albo mini Snake.
-10. Rozbudowa o czujniki i sterowanie pojazdem.
+1. Podłączenie dziewięciu diod, TFT i joysticka.
+2. Sprawdzenie zasilania 3,3 V i wspólnej masy.
+3. Test SPI1 przez jednolite wypełnienie ekranu TFT.
+4. Test odczytu osi joysticka przez ADC.
+5. Test wskaźnika LED 3x3 dla ośmiu kierunków i centrum.
+6. Uruchomienie demo: punkt poruszany joystickiem po ekranie.
+7. Dodanie przycisku joysticka jako zdarzenia gry.
+8. Rozbudowa demo do właściwej gry, np. Snake lub zbieranie punktów.
 
 ## 3. Sprzęt
 
@@ -231,10 +229,69 @@ właściwa dioda. Strefa środkowa powinna zapalać tylko diodę centralną.
 - Połączenia na płytce stykowej powinny być możliwie krótkie, szczególnie
   dla sygnałów SPI.
 
-## 9. Status projektu
+## 9. Aktualna implementacja
 
-Na obecnym etapie działają podstawowe testy GPIO dla LED LD2 i przycisku
-B1. Obsługa TFT, joysticka, diod zewnętrznych i gry jest kolejnym etapem.
-Mapa połączeń w tym dokumencie jest planem pierwszego prototypu i powinna
-zostać potwierdzona po fizycznym podłączeniu elementów.
+Aktualny kod został rozdzielony na pliki według odpowiedzialności:
 
+```text
+Inc/hw.h             # adresy i podstawowe rejestry STM32L476RG
+Inc/tft_st7735.h     # API wyświetlacza
+Inc/joystick.h       # typy kierunku i API joysticka
+Inc/led_matrix.h     # API wskaźnika LED 3x3
+Inc/game.h           # API demo gry
+Src/hw.c             # GPIO, opóźnienia i definicja SystemInit
+Src/tft_st7735.c     # SPI1, reset, komendy ST7735S i rysowanie
+Src/joystick.c       # ADC1 dla VRx/VRy oraz przycisk SW
+Src/led_matrix.c     # mapowanie kierunku na diodę
+Src/game.c           # punkt gracza i ograniczenie do ekranu
+Src/main.c           # inicjalizacja oraz główna pętla zdarzeń
+```
+
+Przepływ programu jest następujący:
+
+```text
+ADC/GPIO joysticka
+        ↓
+JoystickState (wartości X, Y, kierunek, SW)
+        ├──→ LED 3x3
+        └──→ aktualizacja punktu na TFT
+```
+
+Sterownik TFT został napisany lokalnie dla tego projektu. Nie jest potrzebne
+łączenie zewnętrznej biblioteki ani HAL, ponieważ obecny projekt jest
+projektem bare-metal bez pliku `stm32l4xx_hal.h`. Dzięki temu można najpierw
+uruchomić sprzęt bez zmiany konfiguracji CubeIDE. Po potwierdzeniu działania
+można wymienić warstwę SPI na HAL bez zmiany API gry.
+
+### Parametry pierwszego demo
+
+- STM32L476RG uruchamia się z domyślnym HSI16,
+- SPI1 pracuje jako master, 8 bitów, MSB first, SPI mode 0,
+- początkowy zegar SPI wynosi około 500 kHz,
+- TFT używa koloru RGB565,
+- pętla gry wykonuje aktualizację co około 30 ms,
+- strefa neutralna joysticka jest między około 1300 i 2800 dla ADC 12-bit,
+- przy wychyleniu zapalana jest jedna z ośmiu diod kierunkowych,
+- w centrum świeci dioda środkowa.
+
+## 10. Procedura uruchomienia i testów
+
+1. Podłącz elementy zgodnie z tabelami w tym pliku.
+2. Zostaw `BL` TFT podłączone do 3V3.
+3. W STM32CubeIDE otwórz projekt `nocka_pwr`, nie katalog nadrzędny.
+4. Wykonaj `Project -> Build Project`.
+5. Uruchom program przez `Debug` lub `Run`.
+6. Najpierw sprawdź, czy ekran zapala się na czarno z niebieską ramką.
+7. Sprawdź, czy środkowa dioda świeci przy nieruszonym joysticku.
+8. Poruszaj joystickiem i sprawdź zgodność kierunku na TFT i LED.
+9. Jeżeli osie są odwrócone, zamień warunki `y_up/y_down` lub przewody
+   `VRx/VRy` po potwierdzeniu pomiarami.
+10. Jeżeli TFT jest biały lub czarny bez ramki, zatrzymaj się i sprawdź
+    kolejno `VCC`, `GND`, `CS`, `DC`, `RST`, `SCK` i `DIN`.
+
+## 11. Status projektu
+
+W tej wersji dodano kod pierwszego prototypu: konfigurację SPI1, sterownik
+ST7735S, ADC joysticka, mapowanie kierunku na LED 3x3 oraz poruszanie
+punktem na ekranie. Przed testem fizycznym trzeba potwierdzić poprawność
+połączeń i wykonać kompilację w STM32CubeIDE.
