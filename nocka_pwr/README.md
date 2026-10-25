@@ -171,6 +171,15 @@ Po pomyślnym przejściu testów:
 
 ## 8. Status
 
-Kod prototypu znajduje się w `Inc` i `Src`. Kod TFT i dokumentacja są zgodne
-z mapą **SPI2: PB10 = CLK, PC3 = DIN** oraz `PB12 = CS`, `PB11 = DC`,
-`PB2 = RST`. Przed testem fizycznym wykonaj kompilację w STM32CubeIDE.
+Kod prototypu znajduje się w `Inc` i `Src`. SPI2 jest konfigurowane
+bezpośrednio w `tft_st7735.c`, bez HAL i bez CubeMX:
+
+- `PB10` = SPI2_SCK,
+- `PC3` = SPI2_MOSI/DIN,
+- master, 8 bitów, MSB first, SPI mode 0,
+- HSI16 / 8, czyli około 2 MHz,
+- programowe NSS,
+- `PB12` = CS, `PB11` = DC, `PB2` = RST.
+
+Przed testem fizycznym wykonaj kompilację w STM32CubeIDE. Nie musisz
+tworzyć pliku `.ioc`, aby uruchomić ten wariant.

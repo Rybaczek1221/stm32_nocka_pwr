@@ -76,9 +76,12 @@ void tft_init(void)
     gpio_write(GPIOB, TFT_RST_PIN, 1U);
 
     RCC->APB1ENR1 |= RCC_APB1_SPI2EN;
-    SPI2->CR1 = (1UL << 2) | (1UL << 8) | (1UL << 9);
-    SPI2->CR1 |= 2UL << 3; /* 16 MHz / 8 = 2 MHz during first test. */
-    SPI2->CR1 |= 1UL << 6;
+    SPI2->CR1 = 0U;
+    SPI2->CR1 = (1UL << 2)       /* Master mode. */
+              | (2UL << 3)       /* HSI16 / 8 = about 2 MHz. */
+              | (1UL << 8)       /* Software NSS management. */
+              | (1UL << 9);      /* Internal NSS high. */
+    SPI2->CR1 |= 1UL << 6;        /* Enable SPI2. */
 
     gpio_write(GPIOB, TFT_RST_PIN, 0U);
     delay_ms(20U);
