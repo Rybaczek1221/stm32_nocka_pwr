@@ -18,15 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "spi.h"
 #include "gpio.h"
-#include "tft_st7735.h"
-#include "adc.h"
-#include "joystick.h"
-#include "game.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "tft_st7735.h"
+#include "joystick.h"
+#include "game.h"
 
 /* USER CODE END Includes */
 
@@ -48,6 +48,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+static JoystickState joystick;
+static uint8_t button_was_pressed;
+static uint8_t game_started;
 
 /* USER CODE END PV */
 
@@ -102,10 +105,6 @@ int main(void)
   game_show_menu();
 
   /* USER CODE END 2 */
-
-  uint8_t game_started = 0U;
-  uint8_t button_was_pressed = 0U;
-  JoystickState joystick;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
