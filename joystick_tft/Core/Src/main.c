@@ -21,6 +21,9 @@
 #include "spi.h"
 #include "gpio.h"
 #include "tft_st7735.h"
+#include "adc.h"
+#include "joystick.h"
+#include "game.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -89,21 +92,46 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI2_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
   HAL_Delay(200U);
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
   tft_init();
-  tft_fill_screen(TFT_BLUE);
+  tft_fill_screen(TFT_BLACK);
+  game_show_menu();
 
   /* USER CODE END 2 */
+
+  uint8_t game_started = 0U;
+  uint8_t button_was_pressed = 0U;
+  JoystickState joystick;
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    joystick = joystick_read();
+
+    if (joystick.pressed && !button_was_pressed)
+    {
+      button_was_pressed = 1U;
+      if (game_started == 0U)
+      {
+        game_started = 1U;
+        game_start();
+      }
+    }
+    if (!joystick.pressed)
+    {
+      button_was_pressed = 0U;
+    }
+    if (game_started != 0U)
+    {
+      game_update(joystick);
+    }
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(500U);
+    HAL_Delay(30U);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
