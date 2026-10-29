@@ -1,14 +1,15 @@
-# Projekt gry joystickiem i wskaźnika kierunku
+# Projekt gier joystickiem i TFT
 
 ## 1. Co to za projekt
 
 Projekt jest realizowany na **NUCLEO-L476RG** z mikrokontrolerem
-**STM32L476RG** i elementami zestawu FORBOT STM32L4. Na tym etapie nie
-budujemy pojazdu. Tworzymy demo gry:
+**STM32L476RG** i elementami zestawu FORBOT STM32L4. Program zawiera menu
+powitalne oraz dwie gry:
 
-- joystick analogowy steruje żółtym punktem na TFT,
+- `SNAKE` — klasyczny wąż sterowany joystickiem, który zbiera czerwone pola,
+- `KROPKA` — żółta kropka unika czerwonych bomb spadających coraz częściej,
 - dziewięć diod LED pokazuje kierunek wychylenia joysticka w układzie 3x3,
-- przycisk joysticka będzie później zdarzeniem gry,
+- przycisk joysticka uruchamia wybraną grę i otwiera pauzę,
 - TFT Waveshare 1.8" ze ST7735S pokazuje obszar gry w orientacji
   `160x128`, zgodnie z konfiguracją z kursu FORBOT.
 
@@ -34,7 +35,7 @@ nocka_pwr/
     ├── tft_st7735.c       # SPI2, reset ST7735S i rysowanie
     ├── joystick.c         # ADC1: VRx/VRy oraz przycisk SW
     ├── led_matrix.c       # mapowanie kierunku na diodę
-    └── game.c             # pozycja punktu i ekran gry
+    └── game.c             # menu, Snake, unikanie bomb, pauza
 ```
 
 ### Rola plików
@@ -43,8 +44,8 @@ nocka_pwr/
   aktualizacja LED i aktualizacja gry.
 - `joystick.c` zamienia napięcia osi na `JoystickDirection`.
 - `led_matrix.c` zapala jedną diodę odpowiadającą kierunkowi.
-- `tft_st7735.c` zawiera protokół ST7735S, ale gra korzysta tylko z API.
-- `game.c` przesuwa punkt i pilnuje granic ekranu.
+- `tft_st7735.c` zawiera protokół ST7735S, prosty raster tekstu i rysowanie.
+- `game.c` przechowuje stany menu, gier, pauzy oraz generator pseudolosowy.
 - `hw.c` zawiera wspólne operacje niskiego poziomu.
 
 ## 3. Plan projektu
@@ -55,8 +56,15 @@ nocka_pwr/
 4. Uruchomić test TFT: reset, inicjalizacja i ramka na ekranie.
 5. Uruchomić test odczytu joysticka przez ADC.
 6. Uruchomić test wskaźnika LED 3x3.
-7. Połączyć wszystko w demo gry.
-8. Dodać debounce przycisku `SW` i pierwsze reguły gry.
+7. Połączyć wszystko w menu i dwie gry.
+8. Przetestować pauzę, powrót do menu i warunki końca gry.
+
+## Obsługa programu
+
+Po uruchomieniu pojawia się ekran `JAROSLAW RYBAK / PWR`. Wychylenie
+joysticka góra/dół wybiera grę, a naciśnięcie `SW` ją uruchamia. W trakcie
+gry `SW` otwiera pauzę; joystick wybiera `WZNOW` albo `MENU`, a `SW`
+zatwierdza. Po kolizji wąż lub kropka pokazuje wynik i `SW` wraca do menu.
 
 ## 4. Połączenia joysticka i LED
 

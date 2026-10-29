@@ -50,7 +50,6 @@
 /* USER CODE BEGIN PV */
 static JoystickState joystick;
 static uint8_t button_was_pressed;
-static uint8_t game_started;
 
 /* USER CODE END PV */
 
@@ -101,8 +100,7 @@ int main(void)
   HAL_Delay(200U);
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
   tft_init();
-  tft_fill_screen(TFT_BLACK);
-  game_show_menu();
+  game_init();
 
   /* USER CODE END 2 */
 
@@ -112,23 +110,9 @@ int main(void)
   {
     joystick = joystick_read();
 
-    if (joystick.pressed && !button_was_pressed)
-    {
-      button_was_pressed = 1U;
-      if (game_started == 0U)
-      {
-        game_started = 1U;
-        game_start();
-      }
-    }
-    if (!joystick.pressed)
-    {
-      button_was_pressed = 0U;
-    }
-    if (game_started != 0U)
-    {
-      game_update(joystick);
-    }
+    game_update(joystick,
+                joystick.pressed != 0U && button_was_pressed == 0U);
+    button_was_pressed = joystick.pressed;
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     HAL_Delay(30U);
     /* USER CODE END WHILE */

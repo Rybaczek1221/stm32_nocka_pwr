@@ -3,8 +3,16 @@
 
 #include "joystick.h"
 
-void game_show_menu(void);
-void game_start(void);
-void game_update(JoystickState state);
+typedef enum
+{
+    GAME_MENU = 0,
+    GAME_SNAKE,
+    GAME_DODGE,
+    GAME_PAUSE,
+    GAME_OVER
+} GameScreen;
+
+void game_init(void);
+void game_update(JoystickState state, uint32_t button_event);
 
 #endif
