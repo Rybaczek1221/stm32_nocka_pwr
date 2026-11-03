@@ -112,8 +112,10 @@ void tft_init(void)
 void tft_fill_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                    uint16_t color)
 {
-    uint8_t data[2] = {(uint8_t)(color >> 8), (uint8_t)color};
-    uint32_t pixels;
+    /* Send one complete scanline per HAL transaction instead of one pixel. */
+    uint8_t line[2U * TFT_WIDTH];
+    uint16_t column;
+    uint16_t row;
 
     if (x >= TFT_WIDTH || y >= TFT_HEIGHT || width == 0U || height == 0U)
     {
@@ -122,13 +124,17 @@ void tft_fill_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
     if ((uint32_t)x + width > TFT_WIDTH) width = TFT_WIDTH - x;
     if ((uint32_t)y + height > TFT_HEIGHT) height = TFT_HEIGHT - y;
 
+    for (column = 0U; column < width; ++column)
+    {
+        line[2U * column] = (uint8_t)(color >> 8);
+        line[2U * column + 1U] = (uint8_t)color;
+    }
     tft_set_window(x, y, width, height);
     TFT_DC_DATA();
     TFT_CS_LOW();
-    pixels = (uint32_t)width * height;
-    while (pixels-- != 0U)
+    for (row = 0U; row < height; ++row)
     {
-        tft_write(data, sizeof(data));
+        tft_write(line, (uint16_t)(2U * width));
     }
     TFT_CS_HIGH();
 }
@@ -174,6 +180,7 @@ void tft_draw_text(uint16_t x, uint16_t y, const char *text, uint16_t color,
                    uint16_t background, uint16_t scale)
 {
     uint16_t cursor = x;
+    uint8_t pixels[10U * 14U * 2U];
     uint8_t column;
     uint8_t row;
     uint8_t index;
@@ -188,16 +195,24 @@ void tft_draw_text(uint16_t x, uint16_t y, const char *text, uint16_t color,
             continue;
         }
         index = font_index(*text++);
-        for (column = 0U; column < 5U; ++column)
+        for (column = 0U; column < 5U * scale; ++column)
         {
-            for (row = 0U; row < 7U; ++row)
+            for (row = 0U; row < 7U * scale; ++row)
             {
-                uint16_t pixel = (font[index][column] & (1U << row)) ?
+                uint16_t pixel = (font[index][column / scale] &
+                                  (1U << (row / scale))) ?
                                  color : background;
-                tft_fill_rect(cursor + column * scale, y + row * scale,
-                              scale, scale, pixel);
+                uint16_t offset = (uint16_t)(2U * (row * 5U * scale + column));
+                pixels[offset] = (uint8_t)(pixel >> 8);
+                pixels[offset + 1U] = (uint8_t)pixel;
             }
         }
+        tft_set_window(cursor, y, (uint16_t)(5U * scale),
+                       (uint16_t)(7U * scale));
+        TFT_DC_DATA();
+        TFT_CS_LOW();
+        tft_write(pixels, (uint16_t)(2U * 5U * 7U * scale * scale));
+        TFT_CS_HIGH();
         cursor = (uint16_t)(cursor + 6U * scale);
     }
 }

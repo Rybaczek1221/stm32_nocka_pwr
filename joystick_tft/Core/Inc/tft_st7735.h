@@ -13,6 +13,12 @@
 #define TFT_RED    0xF800U
 #define TFT_GREEN  0x07E0U
 #define TFT_CYAN   0x07FFU
+#define TFT_NAVY   0x1108U
+#define TFT_PANEL  0x2108U
+#define TFT_PURPLE 0x780FU
+#define TFT_VIOLET 0xA81FU
+#define TFT_GRID   0x528AU
+#define TFT_ORANGE 0xFD20U
 
 void tft_init(void);
 void tft_fill_screen(uint16_t color);

@@ -8,6 +8,7 @@ typedef enum
     GAME_MENU = 0,
     GAME_SNAKE,
     GAME_DODGE,
+    GAME_AIM,
     GAME_PAUSE,
     GAME_OVER
 } GameScreen;
