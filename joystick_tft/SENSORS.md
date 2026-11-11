@@ -1,13 +1,13 @@
 # Czujniki dodatkowe
 
-Dokument opisuje dwa moduły planowane do rozbudowy projektu PWR Night Arcade:
+Dokument opisuje dwa moduły używane lub planowane w projekcie PWR Night Arcade:
 
 - **Crowtail-MPU6050 Accelerometer & Gyro 2.0**, oznaczenie `CRT02122G002`,
 - **KAmodVL6180**.
 
-Oba moduły mogą pracować na wspólnej magistrali **I2C**. W tej wersji
-oprogramowania opisujemy i rezerwujemy sposób podłączenia; odczyt czujników
-można dodać w osobnym module po sprawdzeniu konkretnej wersji płytek.
+Oba moduły mogą pracować na wspólnej magistrali **I2C**. MPU6050 jest już
+obsługiwany przez sterownik `mpu6050.c` i ekran telemetrii. VL6180 pozostaje
+przygotowany do późniejszej integracji z grą Paint.
 
 ## Wspólne zasady
 

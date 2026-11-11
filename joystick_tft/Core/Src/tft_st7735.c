@@ -144,7 +144,7 @@ void tft_fill_screen(uint16_t color)
     tft_fill_rect(0U, 0U, TFT_WIDTH, TFT_HEIGHT, color);
 }
 
-static const uint8_t font[37][5] =
+static const uint8_t font[38][5] =
 {
     {0, 0, 0, 0, 0},
     {0x7E, 0x11, 0x11, 0x11, 0x7E}, {0x7F, 0x49, 0x49, 0x49, 0x36},
@@ -165,7 +165,8 @@ static const uint8_t font[37][5] =
     {0x27, 0x45, 0x45, 0x45, 0x39}, {0x3C, 0x4A, 0x49, 0x49, 0x30},
     {0x01, 0x71, 0x09, 0x05, 0x03}, {0x36, 0x49, 0x49, 0x49, 0x36},
     {0x06, 0x49, 0x49, 0x29, 0x1E},
-    {0x14, 0x08, 0x3E, 0x08, 0x14}
+    {0x14, 0x08, 0x3E, 0x08, 0x14},
+    {0x08, 0x08, 0x08, 0x08, 0x08}
 };
 
 static uint8_t font_index(char character)
@@ -173,6 +174,7 @@ static uint8_t font_index(char character)
     if (character >= 'A' && character <= 'Z') return (uint8_t)(character - 'A' + 1);
     if (character >= '0' && character <= '9') return (uint8_t)(character - '0' + 27);
     if (character == ':') return 36U;
+    if (character == '-') return 37U;
     return 0U;
 }
 

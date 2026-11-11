@@ -9,6 +9,8 @@ typedef enum
     GAME_SNAKE,
     GAME_DODGE,
     GAME_AIM,
+    GAME_TELEMETRY,
+    GAME_FLIGHT,
     GAME_PAUSE,
     GAME_OVER
 } GameScreen;

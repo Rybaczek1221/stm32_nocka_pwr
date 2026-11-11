@@ -28,6 +28,8 @@
 #include "joystick.h"
 #include "game.h"
 #include "lives.h"
+#include "i2c.h"
+#include "mpu6050.h"
 
 /* USER CODE END Includes */
 
@@ -96,6 +98,8 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_ADC1_Init();
+  MX_I2C1_Init();
+  (void)mpu6050_init();
   lives_init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);

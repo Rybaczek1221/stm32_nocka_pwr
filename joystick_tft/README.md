@@ -12,15 +12,18 @@ JAROSLAW RYBAK
 PWR
 ```
 
-Sterowanie odbywa się jednym joystickiem. W menu wybiera się jedną z trzech
-gier:
+Sterowanie odbywa się jednym joystickiem. W menu wybiera się trzy gry, a
+ruchem w prawo otwiera się osobny ekran **CZUJNIKI** z telemetrią MPU6050. Na ekranie
+odczyt odświeża się raz na sekundę, aby wartości były czytelne:
 
 1. **SNAKE** - większa plansza z widoczną kratką, wynikiem, czasem i
    bonusami punktowymi.
 2. **KROPKA** - żółta kropka unika czerwonych, pseudolosowych bomb. Bomb
    przybywa wraz z czasem.
-3. **CELUJ** - kropką trzeba trafić w niebieską strefę, omijając czerwone
-   przeszkody. Każda kolejna runda jest krótsza o 0,1 sekundy.
+3. **LABIRYNT** - kropką trzeba przejść z punktu A do B bez dotknięcia ścian.
+   Gra ma dziesięć poziomów, a każdy kolejny jest trudniejszy.
+4. **CZUJNIKI** - test I2C oraz bieżące dane akcelerometru i żyroskopu z MPU6050.
+   Ruchem w dół można uruchomić grę **SAMOLOT**.
 
 ## Podłączenie elementów
 
@@ -80,6 +83,8 @@ diody wykonują krótki efekt migania.
 ### Menu główne
 
 - joystick góra/dół - wybór gry,
+- joystick w prawo - ekran CZUJNIKI, w lewo - powrót do gier,
+- na telemetrii joystick w dół - start gry SAMOLOT,
 - przycisk joysticka - start,
 - paleta interfejsu: granat, fiolet, cyjan i żółty,
 - zaznaczona pozycja jest pokazana na osobnym panelu z fioletową ramką.
@@ -106,21 +111,29 @@ bonus wart pięć punktów. Kolizja ze ścianą albo własnym ciałem kończy gr
 ### KROPKA
 
 Żółta kropka porusza się w obszarze gry. Czerwone bomby pojawiają się
-pseudolosowo i spadają w dół. Po pewnym czasie częstotliwość pojawiania się
-bomb rośnie, a kolizja kończy grę.
+pseudolosowo z góry, dołu, lewej i prawej strony. Po pewnym czasie
+częstotliwość pojawiania się bomb rośnie, a kolizja kończy grę.
 
-### CELUJ
+### LABIRYNT
 
-Każda runda ma własny limit czasu:
+Żółta kropka startuje w punkcie A i musi dotrzeć do niebieskiego punktu B.
+Czerwone ściany kończą próbę natychmiast po dotknięciu. Po przejściu poziomu
+pojawia się kolejny układ, rośnie liczba przeszkód, zmniejsza się cel i
+skraca się limit czasu. Ukończenie poziomu dziesiątego kończy grę sukcesem.
 
-```text
-5,0 s -> 4,9 s -> 4,8 s -> 4,7 s -> ...
-```
+### CZUJNIKI
 
-Niebieska strefa celu jest losowana w obszarze gry. Czerwona przeszkoda
-kończy rundę natychmiast po kolizji z kropką. Po trafieniu w cel wynik rośnie,
-cel staje się mniejszy, a liczba przeszkód może wzrosnąć. Nieudana próba
-trafienia lub upływ czasu kończy grę.
+Ekran wykonuje test `WHO_AM_I`, pokazuje status `I2C TEST OK/ERROR`, identyfikator
+układu oraz liczbę poprawnie pobranych próbek. Pokazuje też `ACC X/Y/Z` oraz
+`GYR X/Y/Z`. Błąd oznacza brak odpowiedzi czujnika albo błąd magistrali.
+
+### SAMOLOT
+
+Samolot jest sterowany przechyleniem MPU6050. Przechylenie do góry lub dołu
+zmienia wysokość, a przechylenie w lewo lub prawo zmienia kierunek lotu.
+Trzeba przelecieć przez przerwy między czerwonymi przeszkodami. Wynik rośnie
+za każdą miniętą przeszkodę. Jeżeli MPU6050 chwilowo nie odpowiada, joystick
+zastępczo steruje samolotem, co pozwala bezpiecznie sprawdzić samą grę.
 
 ## Struktura kodu
 
@@ -135,7 +148,9 @@ joystick_tft/
 │   └── Src/
 │       ├── main.c          # inicjalizacja HAL i główna pętla programu
 │       ├── joystick.c      # odczyt ADC oraz przycisku joysticka
-│       ├── game.c          # menu, gry, pauza, wyniki i generator losowy
+│       ├── game.c          # menu, gry, telemetria, pauza i generator losowy
+│       ├── i2c.c           # konfiguracja I2C1 na PB8/PB9
+│       ├── mpu6050.c       # odczyt WHO_AM_I i danych MPU6050
 │       ├── lives.c         # stan żyć, diody i efekt końca
 │       ├── tft_st7735.c    # inicjalizacja TFT i szybkie rysowanie
 │       └── spi.c           # konfiguracja SPI2
