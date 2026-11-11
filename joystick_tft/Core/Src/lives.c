@@ -14,7 +14,7 @@ static void lives_draw(void)
     for (index = 0U; index < LIFE_COUNT; ++index)
     {
         HAL_GPIO_WritePin(GPIOC, life_pins[index],
-                          index < lives_remaining ? GPIO_PIN_SET :
+                          index >= LIFE_COUNT - lives_remaining ? GPIO_PIN_SET :
                           GPIO_PIN_RESET);
     }
 }
@@ -60,4 +60,11 @@ uint8_t lives_lose(void)
 uint8_t lives_get(void)
 {
     return lives_remaining;
+}
+
+void lives_set_led(uint8_t index, uint8_t enabled)
+{
+    if (index >= LIFE_COUNT) return;
+    HAL_GPIO_WritePin(GPIOC, life_pins[index],
+                      enabled != 0U ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }

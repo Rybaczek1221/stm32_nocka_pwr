@@ -24,7 +24,8 @@ MPU6050 będzie głównym czujnikiem ruchu:
 - dane do ekranu telemetrii,
 - opcjonalnie sterowanie efektami w Paint.
 
-W Paint joystick będzie poruszał kursorem, a MPU6050 może służyć do:
+W Paint MPU6050 będzie poruszał całym kursorem, bez użycia pada, a czujnik
+może również służyć do:
 
 - zmiany koloru przez przechylenie w lewo/prawo,
 - zwiększania grubości pędzla przez przechylenie góra/dół,
@@ -39,9 +40,9 @@ VL6180 będzie czujnikiem odległości:
 - telemetryka pokazuje odległość i stan pomiaru,
 - może działać jako dodatkowy gest bez wciskania przycisku.
 
-Do pierwszej wersji Paint rekomendowane jest użycie VL6180 tylko do zmiany
-koloru. MPU6050 zostawiamy przede wszystkim do telemetrii, aby sterowanie
-nie było zbyt trudne na pokazie.
+Do pierwszej wersji Paint rekomendowane jest użycie MPU6050 do sterowania
+obu osi. VL6180 pozostaje opcjonalnym rozszerzeniem do gestów i zmiany
+koloru.
 
 ## Ile pinów potrzebujemy
 
@@ -143,7 +144,8 @@ Na płytce stykowej wystarczy przygotować wspólne szyny:
    VL6180.
 6. Z PB9 poprowadź jedną linię do SDA MPU6050 i drugą krótką gałąź do SDA
    VL6180.
-7. Pięć czerwonych LED pozostaje na PC6-PC10.
+7. Pięć LED pozostaje na PC6-PC10: PC6-PC7 czerwone, PC8 żółta,
+   PC9-PC10 zielone.
 8. Każda LED musi mieć osobny rezystor szeregowy, np. 330 ohm.
 
 Nie wkładamy sygnałów SDA/SCL do szyny zasilania. Przewody I2C powinny być
@@ -161,8 +163,8 @@ bezpośrednie linie GPIO STM32.
 
 ### Sterowanie
 
-- joystick - ruch kursora,
-- przycisk joysticka - rozpoczęcie rysowania albo przełączanie trybu,
+- MPU6050 - ruch kursora w obu osiach względem pozycji płaskiej,
+- przycisk joysticka - pauza,
 - VL6180 - zmiana koloru po wykryciu zbliżenia dłoni,
 - MPU6050 - opcjonalna zmiana grubości pędzla przez przechył,
 - dłuższe przytrzymanie przycisku - wyczyszczenie ekranu po potwierdzeniu.
@@ -194,8 +196,18 @@ kolorów, gdy dłoń pozostaje blisko czujnika.
 
 ## Osobne menu telemetrii
 
-Do głównego menu dodamy pozycję **TELEMETRIA**. Ekran będzie odświeżany
+W menu **CZUJNIKI** są telemetria, sensorowy Paint, gra BALANS oraz ekran
+LED-ów. Ekran testu jest odświeżany
 bez pełnego czyszczenia TFT.
+
+### Stabilizacja odczytu MPU6050
+
+Sterownik budzi układ, ustawia zakres akcelerometru na +/-2 g, filtr
+dolnoprzepustowy oraz próbkowanie około 200 Hz. Odczyt ma timeout 20 ms i
+automatycznie próbuje oba typowe adresy `0x68` i `0x69`. W grach pozycja
+neutralna jest średnią 12 próbek z płytki leżącej płasko, a bieżący pomiar
+przechodzi przez filtr IIR 1/4 oraz strefę martwą. Dzięki temu kropka nie
+drży przy nieruchomej płytce i nie ucieka od pojedynczego zakłócenia.
 
 ### Dane MPU6050
 
@@ -246,8 +258,8 @@ pętli przez nieskończone oczekiwanie na I2C.
 3. Dodać sterownik odczytu MPU6050 i ekran telemetrii.
 4. Podłączyć VL6180 równolegle i potwierdzić `0x29`.
 5. Dodać odczyt odległości oraz zmianę koloru.
-6. Dodać pozycję `TELEMETRIA` do menu głównego.
-7. Dodać pozycję `PAINT` do menu głównego.
+6. Dodać wejście `CZUJNIKI` i podmenu testu, Paint, BALANS oraz LED-ów.
+7. Sterować PAINT wyłącznie akcelerometrem MPU6050.
 8. Zaimplementować ramkę, HUD, paletę i rysowanie.
 9. Dodać filtrację, histerezę i obsługę błędów I2C.
 10. Przetestować pokazowo: menu, Paint, telemetrię, gry i diody życia.
@@ -257,7 +269,8 @@ pętli przez nieskończone oczekiwanie na I2C.
 - oba adresy I2C są widoczne na skanerze,
 - telemetria pokazuje zmiany przy poruszaniu płytką,
 - odległość VL6180 zmienia się przy zbliżaniu dłoni,
-- Paint nie zmienia koloru wielokrotnie od jednego gestu,
+- Paint nie reaguje na joystick i nie drży przy płaskiej płytce,
+- BALANS wykorzystuje wyłącznie dane MPU6050 i nalicza punkty za precyzję,
 - rysowanie nie narusza HUD ani ramki,
 - błąd I2C jest widoczny na ekranie,
 - istniejące gry i pięć LED życia działają tak samo jak wcześniej.

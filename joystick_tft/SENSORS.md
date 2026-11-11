@@ -135,16 +135,50 @@ W projekcie czujnik może służyć do:
 
 ## Pięć diod życia
 
-Pięć czerwonych diod LED jest podłączonych do:
+W ekranie testowym LED-y są ułożone od lewej jako: **czerwona, czerwona,
+żółta, zielona, zielona**. Przy pełnym stanie życia świecą wszystkie, a po
+każdej utracie życia gaśnie kolejna dioda od PC6 do PC10.
 
 | Dioda | Pin |
 |---|---|
-| Życie 1 | PC6 |
-| Życie 2 | PC7 |
-| Życie 3 | PC8 |
-| Życie 4 | PC9 |
-| Życie 5 | PC10 |
+| Życie 1 | PC6 - czerwona |
+| Życie 2 | PC7 - czerwona |
+| Życie 3 | PC8 - żółta |
+| Życie 4 | PC9 - zielona |
+| Życie 5 | PC10 - zielona |
 
-Każda dioda musi mieć osobny rezystor szeregowy, np. 220–1 kOhm, a katodę
-należy połączyć z GND. Moduł `lives` gasi jedną diodę po utracie życia.
+Każda dioda musi mieć osobny rezystor szeregowy, np. 220–1 kOhm. Anodę
+łączymy przez rezystor z pinem STM32, a katodę z GND. Moduł `lives` gasi
+jedną diodę po utracie życia.
 Po utracie ostatniego życia wykonuje krótki efekt migania wszystkich diod.
+
+### Montaż na płytce stykowej
+
+1. Wyłącz zasilanie płytki Nucleo.
+2. Doprowadź `GND` STM32 do niebieskiej szyny masy na płytce stykowej.
+3. Wstaw pięć diod tak, aby ich nóżki były po przeciwnych stronach
+   środkowej przerwy płytki. Dłuższa nóżka to anoda, krótsza to katoda.
+4. Wszystkie katody połącz z szyną `GND`.
+5. Każdą anodę połącz przez osobny rezystor z: `PC6`, `PC7`, `PC8`,
+   `PC9` albo `PC10`.
+6. Nie łącz anod bezpośrednio z pinami i nie używaj jednego rezystora
+   dla kilku diod.
+
+Ułóż diody w jednej linii od czerwonych do zielonych i zachowaj kolejność
+z tabeli, bo odpowiada ona kolejności gaszenia.
+
+## Kalibracja MPU6050 do gry
+
+W menu głównym wybierz joystickiem pozycję **CZUJNIKI**, a następnie
+**PAINT** albo **BALANS**. Połóż płytkę płasko i nie poruszaj nią przez
+krótki moment, aż licznik dojdzie do 12 próbek. Program zapamiętuje średnią
+obu osi akcelerometru jako pozycję neutralną.
+
+W grze PAINT przechylenie w obu osiach porusza kropką i zostawia ślad.
+Joystick nie steruje kursorem. Sterownik filtruje pomiary i stosuje strefę
+martwą, więc płaska płytka utrzymuje kropkę w miejscu. Szybki obrót płytki
+zmienia kolor pędzla.
+
+Gra **BALANS** wykorzystuje ten sam skalibrowany odczyt: zielony cel zmienia
+położenie, a punkty są naliczane za utrzymanie kropki w celu. To tryb
+demonstracyjny oparty wyłącznie na MPU6050.

@@ -11,6 +11,10 @@ typedef enum
     GAME_AIM,
     GAME_TELEMETRY,
     GAME_FLIGHT,
+    GAME_PAINT,
+    GAME_BALANCE,
+    GAME_SENSOR_MENU,
+    GAME_LED_INFO,
     GAME_PAUSE,
     GAME_OVER
 } GameScreen;

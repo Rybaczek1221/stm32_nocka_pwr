@@ -8,8 +8,7 @@ zręcznościowej na pokaz podczas **Nocy PWR**.
 Na ekranie startowym wyświetlane są dane autora:
 
 ```text
-JAROSLAW RYBAK
-PWR
+JAROSLAW RYBAK PWR
 ```
 
 Sterowanie odbywa się jednym joystickiem. W menu wybiera się trzy gry, a
@@ -23,14 +22,15 @@ odczyt odświeża się raz na sekundę, aby wartości były czytelne:
 3. **LABIRYNT** - kropką trzeba przejść z punktu A do B bez dotknięcia ścian.
    Gra ma dziesięć poziomów, a każdy kolejny jest trudniejszy.
 4. **CZUJNIKI** - test I2C oraz bieżące dane akcelerometru i żyroskopu z MPU6050.
-   Ruchem w dół można uruchomić grę **SAMOLOT**.
+   Dostępne są telemetria, sensorowa gra **PAINT**, gra **BALANS** oraz test LED-ów.
 
 ## Podłączenie elementów
 
 Wszystkie elementy należy zasilać z **3,3 V** i połączyć ze wspólną masą.
 Nie podawać 5 V na wejścia ADC, wyświetlacz ani linie GPIO.
 
-Pięć czerwonych diod życia jest podłączonych do PC6-PC10. Dodatkowy opis
+Pięć diod życia: dwie czerwone, jedna żółta i dwie zielone, jest podłączonych
+do PC6-PC10. Dodatkowy opis
 czujników MPU6050 i VL6180 znajduje się w [SENSORS.md](./SENSORS.md).
 
 ### Joystick analogowy
@@ -67,13 +67,13 @@ RGB565.
 
 Każda dioda ma osobny rezystor szeregowy, a katodę należy podłączyć do GND:
 
-| Dioda | GPIO |
-|---|---|
-| Życie 1 | PC6 |
-| Życie 2 | PC7 |
-| Życie 3 | PC8 |
-| Życie 4 | PC9 |
-| Życie 5 | PC10 |
+| Dioda | GPIO | Kolor |
+|---|---|---|
+| Życie 1 | PC6 | czerwona |
+| Życie 2 | PC7 | czerwona |
+| Życie 3 | PC8 | żółta |
+| Życie 4 | PC9 | zielona |
+| Życie 5 | PC10 | zielona |
 
 Po utracie życia jedna dioda gaśnie. Po utracie ostatniego życia wszystkie
 diody wykonują krótki efekt migania.
@@ -83,8 +83,8 @@ diody wykonują krótki efekt migania.
 ### Menu główne
 
 - joystick góra/dół - wybór gry,
-- joystick w prawo - ekran CZUJNIKI, w lewo - powrót do gier,
-- na telemetrii joystick w dół - start gry SAMOLOT,
+- joystick góra/dół - wybór kafelka SNAKE, KROPKA, LABIRYNT albo CZUJNIKI,
+- kafelek CZUJNIKI otwiera podmenu: TELEMETRIA, PAINT, BALANS albo LEDY ZYCIA,
 - przycisk joysticka - start,
 - paleta interfejsu: granat, fiolet, cyjan i żółty,
 - zaznaczona pozycja jest pokazana na osobnym panelu z fioletową ramką.
@@ -127,13 +127,20 @@ Ekran wykonuje test `WHO_AM_I`, pokazuje status `I2C TEST OK/ERROR`, identyfikat
 układu oraz liczbę poprawnie pobranych próbek. Pokazuje też `ACC X/Y/Z` oraz
 `GYR X/Y/Z`. Błąd oznacza brak odpowiedzi czujnika albo błąd magistrali.
 
-### SAMOLOT
+### PAINT
 
-Samolot jest sterowany przechyleniem MPU6050. Przechylenie do góry lub dołu
-zmienia wysokość, a przechylenie w lewo lub prawo zmienia kierunek lotu.
-Trzeba przelecieć przez przerwy między czerwonymi przeszkodami. Wynik rośnie
-za każdą miniętą przeszkodę. Jeżeli MPU6050 chwilowo nie odpowiada, joystick
-zastępczo steruje samolotem, co pozwala bezpiecznie sprawdzić samą grę.
+Kropka maluje ekran wyłącznie na podstawie MPU6050. Przechylenie płytki
+steruje obiema osiami, a filtr i strefa martwa stabilizują pozycję. Kalibracja
+12 próbek zapisuje pozycję płaską jako neutralną. Obrót płytki zmienia kolor.
+
+### BALANS
+
+Zielony cel zmienia położenie, a gracz zdobywa punkty za utrzymanie żółtej
+kropki w jego obrębie. Gra korzysta wyłącznie z danych MPU6050 i jest
+efektownym testem precyzji czujnika.
+
+W ekranie LEDY ZYCIA joystick góra/dół wybiera diodę, lewo/prawo przełącza
+jej stan, a przycisk wraca do menu CZUJNIKI.
 
 ## Struktura kodu
 

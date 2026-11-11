@@ -16,6 +16,10 @@
 #define AIM_MAX_OBSTACLES 5U
 #define AIM_LEVELS 10U
 #define FLIGHT_OBSTACLES 4U
+#define FLIGHT_CALIBRATION_SAMPLES 12U
+#define SENSOR_TILT_DEADZONE 900
+#define SENSOR_TILT_SCALE 9000
+#define BALANCE_TARGET_RADIUS 7U
 
 typedef struct
 {
@@ -79,6 +83,28 @@ static uint8_t telemetry_frame;
 static uint8_t telemetry_identity;
 static uint32_t telemetry_samples;
 static FlightObstacle flight_obstacles[FLIGHT_OBSTACLES];
+static uint16_t paint_x;
+static uint16_t paint_y;
+static uint8_t paint_color;
+static uint32_t paint_sensor_cooldown;
+static uint8_t led_test_item;
+static uint8_t led_test_state[5];
+static uint8_t sensor_menu_item;
+static uint8_t flight_calibrating;
+static uint8_t flight_calibration_samples;
+static uint8_t flight_calibration_valid;
+static int32_t flight_calibration_sum_y;
+static int32_t flight_calibration_sum_x;
+static int16_t flight_neutral_y;
+static int16_t flight_neutral_x;
+static int32_t sensor_filtered_x;
+static int32_t sensor_filtered_y;
+static uint16_t balance_x;
+static uint16_t balance_y;
+static uint16_t balance_target_x;
+static uint16_t balance_target_y;
+static uint16_t balance_time;
+static uint16_t balance_score;
 
 static uint8_t direction_is_up(JoystickDirection direction);
 static uint8_t direction_is_down(JoystickDirection direction);
@@ -93,6 +119,14 @@ static void draw_telemetry(void);
 static void start_flight(uint32_t seed);
 static void update_flight(JoystickState state);
 static void redraw_flight(void);
+static void start_paint(void);
+static void update_paint(JoystickState state);
+static void draw_paint(void);
+static void start_balance(void);
+static void update_balance(void);
+static void draw_balance(void);
+static void draw_sensor_menu(void);
+static void draw_led_info(void);
 
 static uint8_t lose_life_or_end(void)
 {
@@ -320,28 +354,21 @@ static void draw_menu(void)
     tft_fill_screen(TFT_NAVY);
     tft_fill_rect(4U, 3U, 152U, 23U, TFT_PURPLE);
     tft_fill_rect(7U, 6U, 146U, 17U, TFT_NAVY);
-    tft_draw_text(18U, 9U, "JAROSLAW RYBAK", TFT_YELLOW, TFT_NAVY, 1U);
-    tft_draw_text(68U, 31U, "PWR", TFT_CYAN, TFT_NAVY, 1U);
-    tft_draw_text(20U, 43U, menu_item == 3U ? "CZUJNIKI" : "WYBIERZ GRE",
-                  TFT_WHITE, TFT_NAVY, 1U);
-    if (menu_item == 3U)
-    {
-        tft_fill_rect(12U, 54U, 136U, 40U, TFT_VIOLET);
-        tft_draw_text(28U, 62U, "CZUJNIKI", TFT_YELLOW, TFT_VIOLET, 1U);
-        tft_draw_text(24U, 79U, "MPU6050 I2C", TFT_WHITE, TFT_VIOLET, 1U);
-        tft_draw_text(13U, 101U, "< GRY       SW TEST", TFT_GREEN, TFT_NAVY, 1U);
-        return;
-    }
-    tft_fill_rect(12U, 54U, 136U, 15U, menu_item == 0U ? TFT_VIOLET : TFT_PANEL);
-    tft_fill_rect(12U, 71U, 136U, 15U, menu_item == 1U ? TFT_VIOLET : TFT_PANEL);
-    tft_fill_rect(12U, 88U, 136U, 15U, menu_item == 2U ? TFT_VIOLET : TFT_PANEL);
-    tft_draw_text(24U, 57U, "SNAKE", menu_item == 0U ? TFT_YELLOW : TFT_WHITE,
+    tft_draw_text(8U, 9U, "JAROSLAW RYBAK PWR", TFT_YELLOW, TFT_NAVY, 1U);
+    tft_draw_text(20U, 34U, "WYBIERZ TRYB", TFT_WHITE, TFT_NAVY, 1U);
+    tft_fill_rect(12U, 44U, 136U, 14U, menu_item == 0U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 61U, 136U, 14U, menu_item == 1U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 78U, 136U, 14U, menu_item == 2U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 95U, 136U, 14U, menu_item == 3U ? TFT_VIOLET : TFT_PANEL);
+    tft_draw_text(24U, 47U, "SNAKE", menu_item == 0U ? TFT_YELLOW : TFT_WHITE,
                   menu_item == 0U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(24U, 74U, "KROPKA", menu_item == 1U ? TFT_YELLOW : TFT_WHITE,
+    tft_draw_text(24U, 64U, "KROPKA", menu_item == 1U ? TFT_YELLOW : TFT_WHITE,
                   menu_item == 1U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(24U, 91U, "LABIRYNT", menu_item == 2U ? TFT_YELLOW : TFT_WHITE,
+    tft_draw_text(24U, 81U, "LABIRYNT", menu_item == 2U ? TFT_YELLOW : TFT_WHITE,
                   menu_item == 2U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(10U, 113U, "PRAWO CZUJNIKI", TFT_GREEN, TFT_NAVY, 1U);
+    tft_draw_text(24U, 98U, "CZUJNIKI", menu_item == 3U ? TFT_YELLOW : TFT_WHITE,
+                  menu_item == 3U ? TFT_VIOLET : TFT_PANEL, 1U);
+    tft_draw_text(28U, 115U, "GORA DOL  SW START", TFT_GREEN, TFT_NAVY, 1U);
 }
 
 static void draw_signed(uint16_t x, uint16_t y, int16_t value)
@@ -349,6 +376,57 @@ static void draw_signed(uint16_t x, uint16_t y, int16_t value)
     uint16_t magnitude = value < 0 ? (uint16_t)(-value) : (uint16_t)value;
     tft_draw_text(x, y, value < 0 ? "-" : "+", TFT_WHITE, TFT_NAVY, 1U);
     tft_draw_uint(x + 6U, y, magnitude, TFT_CYAN, TFT_NAVY, 1U);
+}
+
+static void draw_sensor_menu(void)
+{
+    draw_header("CZUJNIKI");
+    tft_draw_text(18U, 23U, "WYBIERZ TRYB", TFT_WHITE, TFT_NAVY, 1U);
+    tft_fill_rect(12U, 38U, 136U, 15U,
+                  sensor_menu_item == 0U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 56U, 136U, 15U,
+                  sensor_menu_item == 1U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 74U, 136U, 15U,
+                  sensor_menu_item == 2U ? TFT_VIOLET : TFT_PANEL);
+    tft_fill_rect(12U, 92U, 136U, 15U,
+                  sensor_menu_item == 3U ? TFT_VIOLET : TFT_PANEL);
+    tft_draw_text(28U, 41U, "TELEMETRIA",
+                  sensor_menu_item == 0U ? TFT_YELLOW : TFT_WHITE,
+                  sensor_menu_item == 0U ? TFT_VIOLET : TFT_PANEL, 1U);
+    tft_draw_text(28U, 59U, "PAINT",
+                  sensor_menu_item == 1U ? TFT_YELLOW : TFT_WHITE,
+                  sensor_menu_item == 1U ? TFT_VIOLET : TFT_PANEL, 1U);
+    tft_draw_text(28U, 77U, "BALANS",
+                  sensor_menu_item == 2U ? TFT_YELLOW : TFT_WHITE,
+                  sensor_menu_item == 2U ? TFT_VIOLET : TFT_PANEL, 1U);
+    tft_draw_text(28U, 95U, "LEDY ZYCIA",
+                  sensor_menu_item == 3U ? TFT_YELLOW : TFT_WHITE,
+                  sensor_menu_item == 3U ? TFT_VIOLET : TFT_PANEL, 1U);
+    tft_draw_text(13U, 112U, "GORA DOL  SW WYBIERZ", TFT_GREEN, TFT_NAVY, 1U);
+}
+
+static void draw_led_info(void)
+{
+    draw_header("LEDY ZYCIA");
+    static const char *names[5] = {
+        "PC6 CZERWONA", "PC7 CZERWONA", "PC8 ZOLTA",
+        "PC9 ZIELONA", "PC10 ZIELONA"
+    };
+    static const uint16_t colors[5] = {
+        TFT_RED, TFT_RED, TFT_YELLOW, TFT_GREEN, TFT_GREEN
+    };
+    uint8_t index;
+    for (index = 0U; index < 5U; ++index)
+    {
+        tft_fill_rect(12U, 27U + index * 17U, 136U, 14U,
+                      index == led_test_item ? TFT_VIOLET : TFT_PANEL);
+        tft_fill_rect(18U, 30U + index * 17U, 8U, 8U,
+                      led_test_state[index] != 0U ? colors[index] : TFT_BLACK);
+        tft_draw_text(32U, 30U + index * 17U, names[index],
+                      index == led_test_item ? TFT_YELLOW : TFT_WHITE,
+                      index == led_test_item ? TFT_VIOLET : TFT_PANEL, 1U);
+    }
+    tft_draw_text(18U, 114U, "GORA DOL  L/P ZMIEN", TFT_GREEN, TFT_NAVY, 1U);
 }
 
 static void draw_telemetry(void)
@@ -372,8 +450,49 @@ static void draw_telemetry(void)
     draw_signed(128U, 71U, telemetry_data.gyro_z);
     tft_draw_text(8U, 94U, "PROBKI", TFT_WHITE, TFT_NAVY, 1U);
     tft_draw_uint(50U, 94U, telemetry_samples, TFT_YELLOW, TFT_NAVY, 1U);
-    tft_draw_text(8U, 110U, "< MENU DOL LOT SW TEST",
+    tft_draw_text(8U, 110U, "< MENU  SW TEST",
                   TFT_GREEN, TFT_NAVY, 1U);
+}
+
+static void draw_flight_calibration(void)
+{
+    draw_header("KALIBRACJA");
+    tft_draw_text(17U, 38U, "POLOZ PLYTKE PLASKO", TFT_YELLOW, TFT_NAVY, 1U);
+    tft_draw_text(23U, 55U, "NIE RUSZAJ CZUJNIKA", TFT_WHITE, TFT_NAVY, 1U);
+    tft_draw_text(35U, 78U, "PROBKI", TFT_CYAN, TFT_NAVY, 1U);
+    tft_draw_uint(78U, 78U, flight_calibration_samples,
+                  TFT_YELLOW, TFT_NAVY, 1U);
+    tft_draw_text(93U, 78U, "/12", TFT_CYAN, TFT_NAVY, 1U);
+}
+
+static void draw_paint(void)
+{
+    draw_header("PAINT");
+    tft_draw_text(7U, 21U, "MPU6050: PRZECHYLAJ PLYTKE",
+                  TFT_WHITE, TFT_NAVY, 1U);
+    tft_draw_text(8U, 112U, "STOL = SRODEK  SW PAUZA",
+                  TFT_GREEN, TFT_NAVY, 1U);
+    tft_fill_rect(paint_x - 2U, paint_y - 2U, 5U, 5U,
+                  paint_color == 0U ? TFT_CYAN :
+                  paint_color == 1U ? TFT_YELLOW : TFT_ORANGE);
+}
+
+static void draw_balance(void)
+{
+    draw_header("BALANS");
+    tft_draw_text(7U, 21U, "UTRZYMAJ KROPKE W CELU",
+                  TFT_WHITE, TFT_NAVY, 1U);
+    tft_draw_text(8U, 112U, "PRZECHYLAJ  SW PAUZA",
+                  TFT_GREEN, TFT_NAVY, 1U);
+    tft_fill_rect(balance_target_x - BALANCE_TARGET_RADIUS,
+                  balance_target_y - BALANCE_TARGET_RADIUS,
+                  BALANCE_TARGET_RADIUS * 2U + 1U,
+                  BALANCE_TARGET_RADIUS * 2U + 1U, TFT_GREEN);
+    tft_fill_rect(balance_target_x - 2U, balance_target_y - 2U, 5U, 5U,
+                  TFT_NAVY);
+    tft_fill_rect(balance_x - 2U, balance_y - 2U, 5U, 5U, TFT_YELLOW);
+    tft_draw_text(7U, 4U, "WYNIK", TFT_WHITE, TFT_PURPLE, 1U);
+    tft_draw_uint(43U, 4U, balance_score, TFT_YELLOW, TFT_PURPLE, 1U);
 }
 
 static void draw_flight_obstacle(const FlightObstacle *obstacle,
@@ -419,22 +538,221 @@ static void redraw_flight(void)
 
 static void start_flight(uint32_t seed)
 {
-    uint8_t index;
     screen = GAME_FLIGHT;
     random_state = seed ^ 0xC19F42A7UL;
     frame = 0U;
     score = 0U;
     player_x = 38U;
     player_y = 76U;
-    telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
-    for (index = 0U; index < FLIGHT_OBSTACLES; ++index)
+    flight_calibrating = 1U;
+    flight_calibration_samples = 0U;
+    flight_calibration_valid = 0U;
+    flight_calibration_sum_y = 0;
+    flight_neutral_y = 0;
+    draw_flight_calibration();
+}
+
+static void finish_flight_calibration(void)
+{
+    if (flight_calibration_valid != 0U)
     {
-        flight_obstacles[index].x = (uint16_t)(170U + index * 45U);
-        flight_obstacles[index].gap_height = 35U;
-        flight_obstacles[index].gap_y = (uint16_t)(PLAY_TOP + 12U +
-            next_random() % (PLAY_BOTTOM - PLAY_TOP - 47U));
+        flight_neutral_y = (int16_t)(flight_calibration_sum_y /
+                                     flight_calibration_valid);
+        flight_neutral_x = (int16_t)(flight_calibration_sum_x /
+                                     flight_calibration_valid);
     }
-    redraw_flight();
+    flight_calibrating = 0U;
+    telemetry_ok = flight_calibration_valid != 0U;
+    sensor_filtered_x = flight_neutral_x;
+    sensor_filtered_y = flight_neutral_y;
+    if (screen == GAME_PAINT)
+    {
+        paint_x = TFT_WIDTH / 2U;
+        paint_y = (PLAY_TOP + PLAY_BOTTOM) / 2U;
+        paint_color = 0U;
+        paint_sensor_cooldown = 0U;
+        draw_paint();
+    }
+    else if (screen == GAME_BALANCE)
+    {
+        balance_x = TFT_WIDTH / 2U;
+        balance_y = (PLAY_TOP + PLAY_BOTTOM) / 2U;
+        balance_target_x = balance_x;
+        balance_target_y = balance_y;
+        balance_time = 0U;
+        balance_score = 0U;
+        draw_balance();
+    }
+    else
+    {
+        uint8_t index;
+        for (index = 0U; index < FLIGHT_OBSTACLES; ++index)
+        {
+            flight_obstacles[index].x = (uint16_t)(170U + index * 45U);
+            flight_obstacles[index].gap_height = 35U;
+            flight_obstacles[index].gap_y = (uint16_t)(PLAY_TOP + 12U +
+                next_random() % (PLAY_BOTTOM - PLAY_TOP - 47U));
+        }
+        redraw_flight();
+    }
+}
+
+static void start_paint(void)
+{
+    screen = GAME_PAINT;
+    frame = 0U;
+    flight_calibrating = 1U;
+    flight_calibration_samples = 0U;
+    flight_calibration_valid = 0U;
+    flight_calibration_sum_y = 0;
+    flight_calibration_sum_x = 0;
+    flight_neutral_y = 0;
+    flight_neutral_x = 0;
+    draw_flight_calibration();
+}
+
+static void start_balance(void)
+{
+    screen = GAME_BALANCE;
+    random_state = 0x5EED1234UL;
+    flight_calibrating = 1U;
+    flight_calibration_samples = 0U;
+    flight_calibration_valid = 0U;
+    flight_calibration_sum_y = 0;
+    flight_calibration_sum_x = 0;
+    flight_neutral_y = 0;
+    flight_neutral_x = 0;
+    draw_flight_calibration();
+}
+
+static void update_paint(JoystickState state)
+{
+    int32_t height_cm = 15;
+    int32_t delta_y;
+    int32_t delta_x;
+    (void)state;
+
+    if (flight_calibrating != 0U)
+    {
+        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok)
+        {
+            flight_calibration_sum_y += telemetry_data.accel_y;
+            flight_calibration_sum_x += telemetry_data.accel_x;
+            ++flight_calibration_valid;
+        }
+        ++flight_calibration_samples;
+        draw_flight_calibration();
+        if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
+        {
+            finish_flight_calibration();
+        }
+        return;
+    }
+
+    if (telemetry_ok && mpu6050_read(&telemetry_data) == HAL_OK)
+    {
+        sensor_filtered_x += ((int32_t)telemetry_data.accel_x -
+                              sensor_filtered_x) / 4;
+        sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
+                              sensor_filtered_y) / 4;
+        delta_x = sensor_filtered_x - flight_neutral_x;
+        delta_y = sensor_filtered_y - flight_neutral_y;
+        if (delta_x > -SENSOR_TILT_DEADZONE &&
+            delta_x < SENSOR_TILT_DEADZONE) delta_x = 0;
+        if (delta_y > -SENSOR_TILT_DEADZONE &&
+            delta_y < SENSOR_TILT_DEADZONE) delta_y = 0;
+        {
+            int32_t next_x = (int32_t)(TFT_WIDTH / 2U) +
+                delta_x * (PLAY_RIGHT - PLAY_LEFT - 8U) / SENSOR_TILT_SCALE;
+            if (next_x < PLAY_LEFT + 3U) next_x = PLAY_LEFT + 3U;
+            if (next_x > PLAY_RIGHT - 3U) next_x = PLAY_RIGHT - 3U;
+            paint_x = (uint16_t)next_x;
+        }
+        height_cm = 15 + delta_y / 273;
+        if (height_cm < 0) height_cm = 0;
+        if (height_cm > 30) height_cm = 30;
+        paint_y = (uint16_t)(PLAY_BOTTOM -
+            height_cm * (PLAY_BOTTOM - PLAY_TOP) / 30);
+        if (paint_sensor_cooldown > 0U) --paint_sensor_cooldown;
+        if (paint_sensor_cooldown == 0U &&
+            (telemetry_data.gyro_z > 18000 || telemetry_data.gyro_z < -18000))
+        {
+            paint_color = (uint8_t)((paint_color + 1U) % 3U);
+            paint_sensor_cooldown = 20U;
+        }
+        tft_fill_rect(paint_x - 2U, paint_y - 2U, 5U, 5U,
+                      paint_color == 0U ? TFT_CYAN :
+                      paint_color == 1U ? TFT_YELLOW : TFT_ORANGE);
+    }
+    ++frame;
+}
+
+static void update_balance(void)
+{
+    int32_t delta_x;
+    int32_t delta_y;
+    uint16_t distance_x;
+    uint16_t distance_y;
+
+    if (flight_calibrating != 0U)
+    {
+        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok)
+        {
+            flight_calibration_sum_y += telemetry_data.accel_y;
+            flight_calibration_sum_x += telemetry_data.accel_x;
+            ++flight_calibration_valid;
+        }
+        ++flight_calibration_samples;
+        draw_flight_calibration();
+        if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
+            finish_flight_calibration();
+        return;
+    }
+    if (mpu6050_read(&telemetry_data) != HAL_OK)
+    {
+        telemetry_ok = 0U;
+        return;
+    }
+    telemetry_ok = 1U;
+    sensor_filtered_x += ((int32_t)telemetry_data.accel_x -
+                          sensor_filtered_x) / 4;
+    sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
+                          sensor_filtered_y) / 4;
+    delta_x = sensor_filtered_x - flight_neutral_x;
+    delta_y = sensor_filtered_y - flight_neutral_y;
+    if (delta_x > -SENSOR_TILT_DEADZONE && delta_x < SENSOR_TILT_DEADZONE)
+        delta_x = 0;
+    if (delta_y > -SENSOR_TILT_DEADZONE && delta_y < SENSOR_TILT_DEADZONE)
+        delta_y = 0;
+    {
+        int32_t next_x = (int32_t)(TFT_WIDTH / 2U) +
+            delta_x * (PLAY_RIGHT - PLAY_LEFT - 8U) / SENSOR_TILT_SCALE;
+        int32_t next_y = (int32_t)((PLAY_TOP + PLAY_BOTTOM) / 2U) -
+            delta_y * (PLAY_BOTTOM - PLAY_TOP - 8U) / SENSOR_TILT_SCALE;
+        if (next_x < PLAY_LEFT + 3U) next_x = PLAY_LEFT + 3U;
+        if (next_x > PLAY_RIGHT - 3U) next_x = PLAY_RIGHT - 3U;
+        if (next_y < PLAY_TOP + 3U) next_y = PLAY_TOP + 3U;
+        if (next_y > PLAY_BOTTOM - 3U) next_y = PLAY_BOTTOM - 3U;
+        balance_x = (uint16_t)next_x;
+        balance_y = (uint16_t)next_y;
+    }
+    distance_x = balance_x > balance_target_x ?
+                 balance_x - balance_target_x : balance_target_x - balance_x;
+    distance_y = balance_y > balance_target_y ?
+                 balance_y - balance_target_y : balance_target_y - balance_y;
+    if (distance_x <= BALANCE_TARGET_RADIUS &&
+        distance_y <= BALANCE_TARGET_RADIUS) ++balance_score;
+    ++balance_time;
+    if ((balance_time % 100U) == 0U)
+    {
+        balance_target_x = (uint16_t)(PLAY_LEFT + 10U +
+            next_random() % (PLAY_RIGHT - PLAY_LEFT - 20U));
+        balance_target_y = (uint16_t)(PLAY_TOP + 10U +
+            next_random() % (PLAY_BOTTOM - PLAY_TOP - 20U));
+    }
+    draw_balance();
 }
 
 static void update_flight(JoystickState state)
@@ -442,27 +760,42 @@ static void update_flight(JoystickState state)
     uint8_t index;
     uint16_t old_x = player_x;
     uint16_t old_y = player_y;
-    int32_t tilt_x;
     int32_t tilt_y;
+
+    if (flight_calibrating != 0U)
+    {
+        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok)
+        {
+            flight_calibration_sum_y += telemetry_data.accel_y;
+            flight_calibration_sum_x += telemetry_data.accel_x;
+            ++flight_calibration_valid;
+        }
+        ++flight_calibration_samples;
+        draw_flight_calibration();
+        if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
+        {
+            finish_flight_calibration();
+        }
+        return;
+    }
 
     ++frame;
     if ((frame & 1U) == 0U)
     {
         telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
     }
-    tilt_x = telemetry_data.accel_x;
-    tilt_y = telemetry_data.accel_y;
+    tilt_y = (int32_t)telemetry_data.accel_y - flight_neutral_y;
     if (!telemetry_ok)
     {
-        if (state.direction == JOY_LEFT) tilt_x = -12000;
-        else if (state.direction == JOY_RIGHT) tilt_x = 12000;
-        else tilt_x = 0;
         if (direction_is_up(state.direction)) tilt_y = -12000;
         else if (direction_is_down(state.direction)) tilt_y = 12000;
         else tilt_y = 0;
     }
-    if (tilt_x < -3500) player_x -= 2U;
-    else if (tilt_x > 3500) player_x += 2U;
+    if (state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
+        state.direction == JOY_DOWN_LEFT) player_x -= 2U;
+    else if (state.direction == JOY_RIGHT || state.direction == JOY_UP_RIGHT ||
+             state.direction == JOY_DOWN_RIGHT) player_x += 2U;
     if (tilt_y < -3500) player_y -= 2U;
     else if (tilt_y > 3500) player_y += 2U;
     if (player_x < PLAY_LEFT + 6U) player_x = PLAY_LEFT + 6U;
@@ -818,6 +1151,7 @@ static void update_dodge(JoystickState state)
 
 void game_init(void)
 {
+    uint8_t index;
     screen = GAME_MENU;
     menu_item = 0U;
     last_menu_direction = JOY_CENTER;
@@ -835,6 +1169,8 @@ void game_init(void)
     telemetry_data.gyro_x = 0;
     telemetry_data.gyro_y = 0;
     telemetry_data.gyro_z = 0;
+    led_test_item = 0U;
+    for (index = 0U; index < 5U; ++index) led_test_state[index] = 1U;
     lives_reset();
     draw_menu();
 }
@@ -846,25 +1182,10 @@ void game_update(JoystickState state, uint32_t button_event)
     {
         if (state.direction != last_menu_direction)
         {
-            if (state.direction == JOY_RIGHT ||
-                state.direction == JOY_UP_RIGHT ||
-                state.direction == JOY_DOWN_RIGHT)
-            {
-                menu_item = 3U;
-                draw_menu();
-            }
-            else if (menu_item == 3U &&
-                     (state.direction == JOY_LEFT ||
-                      state.direction == JOY_UP_LEFT ||
-                      state.direction == JOY_DOWN_LEFT))
-            {
-                menu_item = 0U;
-                draw_menu();
-            }
-            else if (direction_is_up(state.direction) || direction_is_down(state.direction))
+            if (direction_is_up(state.direction) || direction_is_down(state.direction))
             {
                 menu_item = (uint8_t)((menu_item +
-                            (direction_is_down(state.direction) ? 1U : 2U)) % 3U);
+                            (direction_is_down(state.direction) ? 1U : 3U)) % 4U);
                 draw_menu();
             }
             last_menu_direction = state.direction;
@@ -876,8 +1197,9 @@ void game_update(JoystickState state, uint32_t button_event)
             else if (menu_item == 2U) start_aim(state.x ^ ((uint32_t)state.y << 16));
             else
             {
-                screen = GAME_TELEMETRY;
-                draw_telemetry();
+                screen = GAME_SENSOR_MENU;
+                sensor_menu_item = 0U;
+                draw_sensor_menu();
             }
         }
         return;
@@ -902,6 +1224,8 @@ void game_update(JoystickState state, uint32_t button_event)
                 else if (screen == GAME_DODGE) redraw_dodge();
                 else if (screen == GAME_AIM) redraw_aim();
                 else if (screen == GAME_FLIGHT) redraw_flight();
+                else if (screen == GAME_PAINT) draw_paint();
+                else if (screen == GAME_BALANCE) draw_balance();
                 else draw_telemetry();
             }
             else
@@ -916,18 +1240,82 @@ void game_update(JoystickState state, uint32_t button_event)
         if (button_event != 0U) game_init();
         return;
     }
-    if (screen == GAME_TELEMETRY)
+    if (screen == GAME_SENSOR_MENU)
     {
+        if (state.direction != last_menu_direction)
+        {
+            if (direction_is_up(state.direction) ||
+                direction_is_down(state.direction))
+            {
+                sensor_menu_item = (uint8_t)((sensor_menu_item +
+                    (direction_is_down(state.direction) ? 1U : 3U)) % 4U);
+                draw_sensor_menu();
+            }
+            last_menu_direction = state.direction;
+        }
         if (state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
             state.direction == JOY_DOWN_LEFT)
         {
             game_init();
             return;
         }
-        if (state.direction == JOY_DOWN || state.direction == JOY_DOWN_LEFT ||
-            state.direction == JOY_DOWN_RIGHT)
+        if (button_event != 0U)
         {
-            start_flight(state.x ^ ((uint32_t)state.y << 16));
+            if (sensor_menu_item == 0U)
+            {
+                screen = GAME_TELEMETRY;
+                telemetry_frame = 0U;
+                draw_telemetry();
+            }
+            else if (sensor_menu_item == 1U)
+            {
+                start_paint();
+            }
+            else if (sensor_menu_item == 2U)
+            {
+                start_balance();
+            }
+            else
+            {
+                screen = GAME_LED_INFO;
+                draw_led_info();
+            }
+        }
+        return;
+    }
+    if (screen == GAME_LED_INFO)
+    {
+        if (state.direction != last_menu_direction)
+        {
+            if (direction_is_up(state.direction) || direction_is_down(state.direction))
+            {
+                led_test_item = (uint8_t)((led_test_item +
+                    (direction_is_down(state.direction) ? 1U : 4U)) % 5U);
+                draw_led_info();
+            }
+            else if (state.direction == JOY_LEFT || state.direction == JOY_RIGHT)
+            {
+                led_test_state[led_test_item] =
+                    led_test_state[led_test_item] == 0U ? 1U : 0U;
+                lives_set_led(led_test_item, led_test_state[led_test_item]);
+                draw_led_info();
+            }
+            last_menu_direction = state.direction;
+        }
+        if (button_event != 0U)
+        {
+            screen = GAME_SENSOR_MENU;
+            draw_sensor_menu();
+        }
+        return;
+    }
+    if (screen == GAME_TELEMETRY)
+    {
+        if (state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
+            state.direction == JOY_DOWN_LEFT)
+        {
+            screen = GAME_SENSOR_MENU;
+            draw_sensor_menu();
             return;
         }
         if (button_event != 0U || (++telemetry_frame % 33U) == 0U)
@@ -947,4 +1335,6 @@ void game_update(JoystickState state, uint32_t button_event)
     else if (screen == GAME_DODGE) update_dodge(state);
     else if (screen == GAME_AIM) update_aim(state);
     else if (screen == GAME_FLIGHT) update_flight(state);
+    else if (screen == GAME_PAINT) update_paint(state);
+    else if (screen == GAME_BALANCE) update_balance();
 }
