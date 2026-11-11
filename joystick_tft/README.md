@@ -27,6 +27,9 @@ gier:
 Wszystkie elementy należy zasilać z **3,3 V** i połączyć ze wspólną masą.
 Nie podawać 5 V na wejścia ADC, wyświetlacz ani linie GPIO.
 
+Pięć czerwonych diod życia jest podłączonych do PC6-PC10. Dodatkowy opis
+czujników MPU6050 i VL6180 znajduje się w [SENSORS.md](./SENSORS.md).
+
 ### Joystick analogowy
 
 | Pin modułu | NUCLEO-L476RG | Funkcja |
@@ -56,6 +59,21 @@ wielokrotnego uruchomienia gry.
 
 Program używa orientacji obrazu **160 x 128 pikseli** oraz formatu kolorów
 RGB565.
+
+### Diody życia
+
+Każda dioda ma osobny rezystor szeregowy, a katodę należy podłączyć do GND:
+
+| Dioda | GPIO |
+|---|---|
+| Życie 1 | PC6 |
+| Życie 2 | PC7 |
+| Życie 3 | PC8 |
+| Życie 4 | PC9 |
+| Życie 5 | PC10 |
+
+Po utracie życia jedna dioda gaśnie. Po utracie ostatniego życia wszystkie
+diody wykonują krótki efekt migania.
 
 ## Obsługa
 
@@ -110,13 +128,15 @@ trafienia lub upływ czasu kończy grę.
 joystick_tft/
 ├── Core/
 │   ├── Inc/
-│   │   ├── game.h          # stany aplikacji i publiczne API gry
+│   │   │   ├── game.h          # stany aplikacji i publiczne API gry
+│   │   ├── lives.h         # obsługa pięciu diod życia
 │   │   ├── joystick.h      # typy kierunków i stan joysticka
 │   │   └── tft_st7735.h    # API wyświetlacza i kolory RGB565
 │   └── Src/
 │       ├── main.c          # inicjalizacja HAL i główna pętla programu
 │       ├── joystick.c      # odczyt ADC oraz przycisku joysticka
 │       ├── game.c          # menu, gry, pauza, wyniki i generator losowy
+│       ├── lives.c         # stan żyć, diody i efekt końca
 │       ├── tft_st7735.c    # inicjalizacja TFT i szybkie rysowanie
 │       └── spi.c           # konfiguracja SPI2
 ├── Drivers/                # biblioteki CMSIS i STM32 HAL

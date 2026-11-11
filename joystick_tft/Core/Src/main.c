@@ -27,6 +27,7 @@
 #include "tft_st7735.h"
 #include "joystick.h"
 #include "game.h"
+#include "lives.h"
 
 /* USER CODE END Includes */
 
@@ -95,6 +96,7 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_ADC1_Init();
+  lives_init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
   HAL_Delay(200U);

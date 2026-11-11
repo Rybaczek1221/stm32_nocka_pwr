@@ -1,5 +1,6 @@
 #include "game.h"
 #include "tft_st7735.h"
+#include "lives.h"
 
 #define PLAY_TOP 28U
 #define PLAY_LEFT 8U
@@ -59,6 +60,17 @@ static uint8_t direction_is_down(JoystickDirection direction);
 static void draw_game_over(void);
 static void redraw_aim(void);
 static void draw_aim_obstacles(void);
+static void start_snake(uint32_t seed);
+static void start_dodge(uint32_t seed);
+static void start_aim(uint32_t seed);
+
+static uint8_t lose_life_or_end(void)
+{
+    if (lives_lose() != 0U) return 1U;
+    screen = GAME_OVER;
+    draw_game_over();
+    return 0U;
+}
 
 static uint32_t next_random(void)
 {
@@ -238,8 +250,7 @@ static void update_aim(JoystickState state)
     if (distance_x * distance_x + distance_y * distance_y >
         target_radius * target_radius)
     {
-        screen = GAME_OVER;
-        draw_game_over();
+        if (lose_life_or_end() != 0U) start_aim(next_random());
         return;
     }
     ++score;
@@ -438,16 +449,14 @@ static void update_snake(JoystickState state)
     if (snake_direction == JOY_RIGHT) ++head.x;
     if (head.x >= SNAKE_COLS || head.y >= SNAKE_ROWS)
     {
-        screen = GAME_OVER;
-        draw_game_over();
+        if (lose_life_or_end() != 0U) start_snake(next_random());
         return;
     }
     for (index = 0U; index < snake_length; ++index)
     {
         if (snake[index].x == head.x && snake[index].y == head.y)
         {
-            screen = GAME_OVER;
-            draw_game_over();
+            if (lose_life_or_end() != 0U) start_snake(next_random());
             return;
         }
     }
@@ -516,8 +525,7 @@ static void update_dodge(JoystickState state)
             player_y - 2U <= bombs[index].y + 2U)
         {
             score = frame / 33U;
-            screen = GAME_OVER;
-            draw_game_over();
+            if (lose_life_or_end() != 0U) start_dodge(next_random());
             return;
         }
     }
@@ -542,6 +550,7 @@ void game_init(void)
     screen = GAME_MENU;
     menu_item = 0U;
     last_menu_direction = JOY_CENTER;
+    lives_reset();
     draw_menu();
 }
 

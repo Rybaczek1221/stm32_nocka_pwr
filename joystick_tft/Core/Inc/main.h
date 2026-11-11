@@ -67,6 +67,12 @@ void Error_Handler(void);
 #define LCD_DC_GPIO_Port GPIOB
 #define LCD_CS_Pin GPIO_PIN_12
 #define LCD_CS_GPIO_Port GPIOB
+#define LIFE_LED_1_Pin GPIO_PIN_6
+#define LIFE_LED_2_Pin GPIO_PIN_7
+#define LIFE_LED_3_Pin GPIO_PIN_8
+#define LIFE_LED_4_Pin GPIO_PIN_9
+#define LIFE_LED_5_Pin GPIO_PIN_10
+#define LIFE_LED_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 
