@@ -181,8 +181,14 @@ otwiera menu CZUJNIKI, a ruch joysticka w lewo również kończy telemetrię.
 
 W menu głównym wybierz joystickiem pozycję **CZUJNIKI**, a następnie
 **PAINT** albo **BALANS**. Połóż płytkę płasko i nie poruszaj nią przez
-krótki moment, aż licznik dojdzie do 12 próbek. Program zapamiętuje średnią
+krótki moment, aż licznik dojdzie do 24 próbek. Program zapamiętuje średnią
 obu osi akcelerometru jako pozycję neutralną.
+
+Każda oś jest przeliczana na wirtualną skalę 0--30 kroków. Pozycja 15 jest
+zawsze punktem startowym zapisanym podczas kalibracji, a 0 i 30 oznaczają
+skrajne pozycje pola gry. Jeden krok nie oznacza prawdziwego centymetra:
+jest to wygodne odwzorowanie wychylenia na ekranie, ponieważ MPU6050 nie jest
+dalmierzem.
 
 W grze PAINT przechylenie w obu osiach porusza kropką i zostawia ślad.
 Joystick nie steruje kursorem. Sterownik filtruje pomiary i stosuje strefę

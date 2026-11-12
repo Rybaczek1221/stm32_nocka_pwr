@@ -16,9 +16,10 @@
 #define AIM_MAX_OBSTACLES 5U
 #define AIM_LEVELS 10U
 #define FLIGHT_OBSTACLES 4U
-#define FLIGHT_CALIBRATION_SAMPLES 12U
-#define SENSOR_TILT_DEADZONE 900
-#define SENSOR_TILT_SCALE 9000
+#define FLIGHT_CALIBRATION_SAMPLES 24U
+#define SENSOR_TILT_DEADZONE 700
+#define SENSOR_TILT_RANGE 10000
+#define SENSOR_VIRTUAL_STEPS 30
 #define BALANCE_TARGET_RADIUS 7U
 
 typedef struct
@@ -95,8 +96,12 @@ static uint8_t flight_calibration_samples;
 static uint8_t flight_calibration_valid;
 static int32_t flight_calibration_sum_y;
 static int32_t flight_calibration_sum_x;
-static int16_t flight_neutral_y;
-static int16_t flight_neutral_x;
+static int32_t flight_calibration_min_y;
+static int32_t flight_calibration_max_y;
+static int32_t flight_calibration_min_x;
+static int32_t flight_calibration_max_x;
+static int32_t flight_neutral_y;
+static int32_t flight_neutral_x;
 static int32_t sensor_filtered_x;
 static int32_t sensor_filtered_y;
 static uint16_t balance_x;
@@ -128,6 +133,67 @@ static void update_balance(void);
 static void draw_balance(void);
 static void draw_sensor_menu(void);
 static void draw_led_info(void);
+
+static int32_t sensor_to_step(int32_t delta)
+{
+    int32_t step;
+    if (delta > -SENSOR_TILT_DEADZONE &&
+        delta < SENSOR_TILT_DEADZONE)
+    {
+        delta = 0;
+    }
+    step = 15 + (delta * 15) / SENSOR_TILT_RANGE;
+    if (step < 0) step = 0;
+    if (step > SENSOR_VIRTUAL_STEPS) step = SENSOR_VIRTUAL_STEPS;
+    return step;
+}
+
+static uint16_t sensor_step_to_x(int32_t step)
+{
+    return (uint16_t)(PLAY_LEFT + 3U +
+        step * (PLAY_RIGHT - PLAY_LEFT - 6U) / SENSOR_VIRTUAL_STEPS);
+}
+
+static uint16_t sensor_step_to_y(int32_t step)
+{
+    return (uint16_t)(PLAY_BOTTOM - 3U -
+        step * (PLAY_BOTTOM - PLAY_TOP - 6U) / SENSOR_VIRTUAL_STEPS);
+}
+
+static void reset_sensor_calibration(void)
+{
+    flight_calibrating = 1U;
+    flight_calibration_samples = 0U;
+    flight_calibration_valid = 0U;
+    flight_calibration_sum_y = 0;
+    flight_calibration_sum_x = 0;
+    flight_calibration_min_y = 32767;
+    flight_calibration_max_y = -32768;
+    flight_calibration_min_x = 32767;
+    flight_calibration_max_x = -32768;
+    flight_neutral_y = 0;
+    flight_neutral_x = 0;
+}
+
+static void collect_sensor_calibration(void)
+{
+    telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+    if (telemetry_ok)
+    {
+        flight_calibration_sum_y += telemetry_data.accel_y;
+        flight_calibration_sum_x += telemetry_data.accel_x;
+        if (telemetry_data.accel_y < flight_calibration_min_y)
+            flight_calibration_min_y = telemetry_data.accel_y;
+        if (telemetry_data.accel_y > flight_calibration_max_y)
+            flight_calibration_max_y = telemetry_data.accel_y;
+        if (telemetry_data.accel_x < flight_calibration_min_x)
+            flight_calibration_min_x = telemetry_data.accel_x;
+        if (telemetry_data.accel_x > flight_calibration_max_x)
+            flight_calibration_max_x = telemetry_data.accel_x;
+        ++flight_calibration_valid;
+    }
+    ++flight_calibration_samples;
+}
 
 static uint8_t lose_life_or_end(void)
 {
@@ -494,7 +560,7 @@ static void draw_flight_calibration(void)
     tft_draw_text(35U, 78U, "PROBKI", TFT_CYAN, TFT_NAVY, 1U);
     tft_draw_uint(78U, 78U, flight_calibration_samples,
                   TFT_YELLOW, TFT_NAVY, 1U);
-    tft_draw_text(93U, 78U, "/12", TFT_CYAN, TFT_NAVY, 1U);
+    tft_draw_text(93U, 78U, "/24", TFT_CYAN, TFT_NAVY, 1U);
 }
 
 static void draw_paint(void)
@@ -576,11 +642,8 @@ static void start_flight(uint32_t seed)
     score = 0U;
     player_x = 38U;
     player_y = 76U;
-    flight_calibrating = 1U;
-    flight_calibration_samples = 0U;
-    flight_calibration_valid = 0U;
-    flight_calibration_sum_y = 0;
-    flight_neutral_y = 0;
+    reset_sensor_calibration();
+    flight_calibration_sum_x = 0;
     draw_flight_calibration();
 }
 
@@ -588,10 +651,10 @@ static void finish_flight_calibration(void)
 {
     if (flight_calibration_valid != 0U)
     {
-        flight_neutral_y = (int16_t)(flight_calibration_sum_y /
-                                     flight_calibration_valid);
-        flight_neutral_x = (int16_t)(flight_calibration_sum_x /
-                                     flight_calibration_valid);
+        flight_neutral_y = flight_calibration_sum_y /
+                           flight_calibration_valid;
+        flight_neutral_x = flight_calibration_sum_x /
+                           flight_calibration_valid;
     }
     flight_calibrating = 0U;
     telemetry_ok = flight_calibration_valid != 0U;
@@ -633,13 +696,7 @@ static void start_paint(void)
 {
     screen = GAME_PAINT;
     frame = 0U;
-    flight_calibrating = 1U;
-    flight_calibration_samples = 0U;
-    flight_calibration_valid = 0U;
-    flight_calibration_sum_y = 0;
-    flight_calibration_sum_x = 0;
-    flight_neutral_y = 0;
-    flight_neutral_x = 0;
+    reset_sensor_calibration();
     draw_flight_calibration();
 }
 
@@ -647,13 +704,7 @@ static void start_balance(void)
 {
     screen = GAME_BALANCE;
     random_state = 0x5EED1234UL;
-    flight_calibrating = 1U;
-    flight_calibration_samples = 0U;
-    flight_calibration_valid = 0U;
-    flight_calibration_sum_y = 0;
-    flight_calibration_sum_x = 0;
-    flight_neutral_y = 0;
-    flight_neutral_x = 0;
+    reset_sensor_calibration();
     draw_flight_calibration();
 }
 
@@ -666,14 +717,7 @@ static void update_paint(JoystickState state)
 
     if (flight_calibrating != 0U)
     {
-        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
-        if (telemetry_ok)
-        {
-            flight_calibration_sum_y += telemetry_data.accel_y;
-            flight_calibration_sum_x += telemetry_data.accel_x;
-            ++flight_calibration_valid;
-        }
-        ++flight_calibration_samples;
+        collect_sensor_calibration();
         draw_flight_calibration();
         if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
         {
@@ -688,24 +732,11 @@ static void update_paint(JoystickState state)
                               sensor_filtered_x) / 4;
         sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
                               sensor_filtered_y) / 4;
-        delta_x = sensor_filtered_x - flight_neutral_x;
-        delta_y = sensor_filtered_y - flight_neutral_y;
-        if (delta_x > -SENSOR_TILT_DEADZONE &&
-            delta_x < SENSOR_TILT_DEADZONE) delta_x = 0;
-        if (delta_y > -SENSOR_TILT_DEADZONE &&
-            delta_y < SENSOR_TILT_DEADZONE) delta_y = 0;
-        {
-            int32_t next_x = (int32_t)(TFT_WIDTH / 2U) +
-                delta_x * (PLAY_RIGHT - PLAY_LEFT - 8U) / SENSOR_TILT_SCALE;
-            if (next_x < PLAY_LEFT + 3U) next_x = PLAY_LEFT + 3U;
-            if (next_x > PLAY_RIGHT - 3U) next_x = PLAY_RIGHT - 3U;
-            paint_x = (uint16_t)next_x;
-        }
-        height_cm = 15 + delta_y / 273;
-        if (height_cm < 0) height_cm = 0;
-        if (height_cm > 30) height_cm = 30;
-        paint_y = (uint16_t)(PLAY_BOTTOM -
-            height_cm * (PLAY_BOTTOM - PLAY_TOP) / 30);
+        delta_x = sensor_to_step(sensor_filtered_x - flight_neutral_x);
+        delta_y = sensor_to_step(sensor_filtered_y - flight_neutral_y);
+        paint_x = sensor_step_to_x(delta_x);
+        height_cm = delta_y;
+        paint_y = sensor_step_to_y(height_cm);
         if (paint_sensor_cooldown > 0U) --paint_sensor_cooldown;
         if (paint_sensor_cooldown == 0U &&
             (telemetry_data.gyro_z > 18000 || telemetry_data.gyro_z < -18000))
@@ -729,14 +760,7 @@ static void update_balance(void)
 
     if (flight_calibrating != 0U)
     {
-        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
-        if (telemetry_ok)
-        {
-            flight_calibration_sum_y += telemetry_data.accel_y;
-            flight_calibration_sum_x += telemetry_data.accel_x;
-            ++flight_calibration_valid;
-        }
-        ++flight_calibration_samples;
+        collect_sensor_calibration();
         draw_flight_calibration();
         if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
             finish_flight_calibration();
@@ -752,24 +776,10 @@ static void update_balance(void)
                           sensor_filtered_x) / 4;
     sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
                           sensor_filtered_y) / 4;
-    delta_x = sensor_filtered_x - flight_neutral_x;
-    delta_y = sensor_filtered_y - flight_neutral_y;
-    if (delta_x > -SENSOR_TILT_DEADZONE && delta_x < SENSOR_TILT_DEADZONE)
-        delta_x = 0;
-    if (delta_y > -SENSOR_TILT_DEADZONE && delta_y < SENSOR_TILT_DEADZONE)
-        delta_y = 0;
-    {
-        int32_t next_x = (int32_t)(TFT_WIDTH / 2U) +
-            delta_x * (PLAY_RIGHT - PLAY_LEFT - 8U) / SENSOR_TILT_SCALE;
-        int32_t next_y = (int32_t)((PLAY_TOP + PLAY_BOTTOM) / 2U) -
-            delta_y * (PLAY_BOTTOM - PLAY_TOP - 8U) / SENSOR_TILT_SCALE;
-        if (next_x < PLAY_LEFT + 3U) next_x = PLAY_LEFT + 3U;
-        if (next_x > PLAY_RIGHT - 3U) next_x = PLAY_RIGHT - 3U;
-        if (next_y < PLAY_TOP + 3U) next_y = PLAY_TOP + 3U;
-        if (next_y > PLAY_BOTTOM - 3U) next_y = PLAY_BOTTOM - 3U;
-        balance_x = (uint16_t)next_x;
-        balance_y = (uint16_t)next_y;
-    }
+    delta_x = sensor_to_step(sensor_filtered_x - flight_neutral_x);
+    delta_y = sensor_to_step(sensor_filtered_y - flight_neutral_y);
+    balance_x = sensor_step_to_x(delta_x);
+    balance_y = sensor_step_to_y(delta_y);
     distance_x = balance_x > balance_target_x ?
                  balance_x - balance_target_x : balance_target_x - balance_x;
     distance_y = balance_y > balance_target_y ?

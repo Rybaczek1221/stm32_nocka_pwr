@@ -205,7 +205,7 @@ bez pełnego czyszczenia TFT.
 Sterownik budzi układ, ustawia zakres akcelerometru na +/-2 g, filtr
 dolnoprzepustowy oraz próbkowanie około 200 Hz. Odczyt ma timeout 20 ms i
 automatycznie próbuje oba typowe adresy `0x68` i `0x69`. W grach pozycja
-neutralna jest średnią 12 próbek z płytki leżącej płasko, a bieżący pomiar
+neutralna jest średnią 24 próbek z płytki leżącej płasko, a bieżący pomiar
 przechodzi przez filtr IIR 1/4 oraz strefę martwą. Dzięki temu kropka nie
 drży przy nieruchomej płytce i nie ucieka od pojedynczego zakłócenia.
 
