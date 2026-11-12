@@ -123,6 +123,8 @@ static uint16_t balance_score;
 static uint8_t direction_is_up(JoystickDirection direction);
 static uint8_t direction_is_down(JoystickDirection direction);
 static void draw_game_over(void);
+static void draw_lives_count(uint16_t x, uint16_t y,
+                             uint16_t foreground, uint16_t background);
 static void redraw_aim(void);
 static void draw_aim_obstacles(void);
 static void draw_aim_border(void);
@@ -299,6 +301,7 @@ static void draw_aim_border(void)
 
 static void draw_aim_status(uint16_t remaining_tenths)
 {
+    draw_lives_count(4U, 5U, TFT_WHITE, TFT_PURPLE);
     tft_fill_rect(103U, 1U, 53U, 17U, TFT_PURPLE);
     tft_draw_text(104U, 5U, "CZAS", TFT_CYAN, TFT_PURPLE, 1U);
     tft_draw_uint(134U, 5U, remaining_tenths / 10U, TFT_YELLOW,
@@ -391,6 +394,13 @@ static void draw_header(const char *title)
     tft_draw_text(4U, 5U, title, TFT_YELLOW, TFT_PURPLE, 1U);
 }
 
+static void draw_lives_count(uint16_t x, uint16_t y,
+                             uint16_t foreground, uint16_t background)
+{
+    tft_draw_text(x, y, "L:", foreground, background, 1U);
+    tft_draw_uint(x + 12U, y, lives_get(), TFT_YELLOW, background, 1U);
+}
+
 static void draw_snake_cell(Position cell, uint16_t color)
 {
     tft_fill_rect(PLAY_LEFT + cell.x * SNAKE_CELL + 1U,
@@ -421,6 +431,7 @@ static void draw_snake_board(void)
 
 static void draw_snake_status(void)
 {
+    draw_lives_count(4U, 5U, TFT_WHITE, TFT_PURPLE);
     tft_fill_rect(38U, 1U, 118U, 17U, TFT_PURPLE);
     tft_draw_text(41U, 5U, "WYNIK", TFT_WHITE, TFT_PURPLE, 1U);
     tft_draw_uint(75U, 5U, score, TFT_YELLOW, TFT_PURPLE, 1U);
@@ -449,8 +460,11 @@ static void update_aim(JoystickState state)
     }
     if (player_hits_obstacle())
     {
-        screen = GAME_OVER;
-        draw_game_over();
+        if (lose_life_or_end() != 0U)
+        {
+            start_aim_round();
+            redraw_aim();
+        }
         return;
     }
     if (player_reached_target())
@@ -670,6 +684,7 @@ static void draw_flight_plane(uint16_t color)
 static void draw_flight_status(void)
 {
     tft_fill_rect(4U, 1U, 152U, 17U, TFT_PURPLE);
+    draw_lives_count(130U, 5U, TFT_WHITE, TFT_PURPLE);
     tft_draw_text(7U, 5U, "LOT", TFT_YELLOW, TFT_PURPLE, 1U);
     tft_draw_text(38U, 5U, "WYNIK", TFT_WHITE, TFT_PURPLE, 1U);
     tft_draw_uint(75U, 5U, score, TFT_CYAN, TFT_PURPLE, 1U);
@@ -954,14 +969,16 @@ static void draw_pause(void)
 static void draw_game_over(void)
 {
     tft_fill_screen(TFT_NAVY);
-    tft_fill_rect(10U, 18U, 140U, 84U, TFT_PURPLE);
-    tft_fill_rect(13U, 21U, 134U, 78U, TFT_PANEL);
+    tft_fill_rect(10U, 18U, 140U, 90U, TFT_PURPLE);
+    tft_fill_rect(13U, 21U, 134U, 84U, TFT_PANEL);
     tft_draw_text(29U, 32U, "KONIEC GRY", TFT_YELLOW, TFT_PANEL, 1U);
     tft_draw_text(31U, 52U, "WYNIK", TFT_WHITE, TFT_PANEL, 1U);
     tft_draw_uint(75U, 52U, score, TFT_CYAN, TFT_PANEL, 1U);
-    tft_draw_text(30U, 76U, "CZAS", TFT_WHITE, TFT_PANEL, 1U);
-    tft_draw_uint(65U, 76U, frame / 33U, TFT_CYAN, TFT_PANEL, 1U);
-    tft_draw_text(22U, 91U, "SW MENU", TFT_GREEN, TFT_PANEL, 1U);
+    tft_draw_text(30U, 70U, "CZAS", TFT_WHITE, TFT_PANEL, 1U);
+    tft_draw_uint(65U, 70U, frame / 33U, TFT_CYAN, TFT_PANEL, 1U);
+    tft_draw_text(30U, 87U, "ZYCIA", TFT_WHITE, TFT_PANEL, 1U);
+    tft_draw_uint(75U, 87U, lives_get(), TFT_CYAN, TFT_PANEL, 1U);
+    tft_draw_text(22U, 101U, "SW MENU", TFT_GREEN, TFT_PANEL, 1U);
 }
 
 static void start_snake(uint32_t seed)
@@ -1009,6 +1026,7 @@ static void redraw_dodge(void)
 {
     uint8_t index;
     draw_header("KROPKA");
+    draw_lives_count(4U, 5U, TFT_WHITE, TFT_PURPLE);
     tft_draw_text(4U, 21U, "UNIKAJ BOMB  SW PAUZA", TFT_WHITE,
                   TFT_NAVY, 1U);
     for (index = 0U; index < bomb_count; ++index)
@@ -1068,6 +1086,7 @@ static void start_dodge(uint32_t seed)
     player_x = TFT_WIDTH / 2U;
     player_y = 82U;
     draw_header("KROPKA");
+    draw_lives_count(4U, 5U, TFT_WHITE, TFT_PURPLE);
     tft_draw_text(4U, 21U, "BOMBY 4 STRONY  SW", TFT_WHITE,
                   TFT_NAVY, 1U);
     tft_fill_rect(player_x - 2U, player_y - 2U, 5U, 5U, TFT_YELLOW);
@@ -1259,6 +1278,7 @@ static void update_dodge(JoystickState state)
     if ((frame % 33U) == 0U)
     {
         score = frame / 33U;
+        draw_lives_count(4U, 5U, TFT_WHITE, TFT_PURPLE);
         tft_draw_uint(70U, 2U, score, TFT_YELLOW, TFT_BLACK, 1U);
     }
 }

@@ -111,14 +111,17 @@ bonus wart pięć punktów. Kolizja ze ścianą albo własnym ciałem kończy gr
 
 Żółta kropka porusza się w obszarze gry. Czerwone bomby pojawiają się
 pseudolosowo z góry, dołu, lewej i prawej strony. Po pewnym czasie
-częstotliwość pojawiania się bomb rośnie, a kolizja kończy grę.
+częstotliwość pojawiania się bomb rośnie, a kolizja zabiera jedno życie.
 
 ### LABIRYNT
 
 Żółta kropka startuje w punkcie A i musi dotrzeć do niebieskiego punktu B.
-Czerwone ściany kończą próbę natychmiast po dotknięciu. Po przejściu poziomu
-pojawia się kolejny układ, rośnie liczba przeszkód, zmniejsza się cel i
-skraca się limit czasu. Ukończenie poziomu dziesiątego kończy grę sukcesem.
+Czerwone ściany i krawędzie zabierają jedno życie po dotknięciu. Po przejściu
+poziomu pojawia się kolejny układ, rośnie liczba przeszkód, zmniejsza się cel
+i skraca się limit czasu. Ukończenie poziomu dziesiątego kończy grę sukcesem.
+
+W każdym ekranie gry skrót `L:` pokazuje liczbę pozostałych żyć. Po utracie
+życia odpowiednia dioda gaśnie, a gra rozpoczyna nową próbę.
 
 ### CZUJNIKI
 
