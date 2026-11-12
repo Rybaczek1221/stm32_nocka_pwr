@@ -494,25 +494,25 @@ static void draw_sensor_menu(void)
 static void draw_led_info(void)
 {
     draw_header("LEDY ZYCIA");
-    static const char *names[5] = {
-        "PC6 CZERWONA", "PC7 CZERWONA", "PC8 ZOLTA",
-        "PC9 ZIELONA", "PC10 ZIELONA"
-    };
     static const uint16_t colors[5] = {
         TFT_RED, TFT_RED, TFT_YELLOW, TFT_GREEN, TFT_GREEN
     };
+    static const char *labels[5] = {"C", "C", "Z", "G", "G"};
     uint8_t index;
     for (index = 0U; index < 5U; ++index)
     {
-        tft_fill_rect(12U, 27U + index * 17U, 136U, 14U,
-                      index == led_test_item ? TFT_VIOLET : TFT_PANEL);
-        tft_fill_rect(18U, 30U + index * 17U, 8U, 8U,
+        uint16_t x = (uint16_t)(10U + index * 30U);
+        uint16_t background = index == led_test_item ? TFT_BLUE : TFT_PANEL;
+        tft_fill_rect(x, 40U, 24U, 28U, background);
+        tft_fill_rect(x + 5U, 45U, 14U, 14U,
                       led_test_state[index] != 0U ? colors[index] : TFT_BLACK);
-        tft_draw_text(32U, 30U + index * 17U, names[index],
-                      index == led_test_item ? TFT_YELLOW : TFT_WHITE,
-                      index == led_test_item ? TFT_VIOLET : TFT_PANEL, 1U);
+        tft_draw_text(x + 9U, 72U, labels[index], TFT_WHITE, TFT_NAVY, 1U);
     }
-    tft_draw_text(18U, 114U, "GORA DOL  L/P ZMIEN", TFT_GREEN, TFT_NAVY, 1U);
+    tft_draw_text(18U, 23U, "CZER CZER ZOL ZIEL ZIEL",
+                  TFT_WHITE, TFT_NAVY, 1U);
+    tft_draw_text(12U, 103U, "GORA/DOL WYBOR  L/P STAN",
+                  TFT_GREEN, TFT_NAVY, 1U);
+    tft_draw_text(34U, 116U, "SW MENU", TFT_GREEN, TFT_NAVY, 1U);
 }
 
 static void draw_telemetry(void)
