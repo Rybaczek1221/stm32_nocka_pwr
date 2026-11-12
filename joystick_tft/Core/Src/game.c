@@ -16,6 +16,8 @@
 #define AIM_MAX_OBSTACLES 5U
 #define AIM_LEVELS 10U
 #define FLIGHT_OBSTACLES 4U
+#define BOMB_SIZE 7U
+#define BOMB_RADIUS 3U
 #define FLIGHT_CALIBRATION_SAMPLES 24U
 #define SENSOR_TILT_DEADZONE 700
 #define SENSOR_TILT_RANGE 10000
@@ -116,6 +118,7 @@ static uint8_t direction_is_down(JoystickDirection direction);
 static void draw_game_over(void);
 static void redraw_aim(void);
 static void draw_aim_obstacles(void);
+static void draw_aim_border(void);
 static void start_snake(uint32_t seed);
 static void start_dodge(uint32_t seed);
 static void start_aim(uint32_t seed);
@@ -241,6 +244,19 @@ static void draw_aim_obstacles(void)
                       aim_obstacles[index].width - 4U,
                       aim_obstacles[index].height - 4U, TFT_PURPLE);
     }
+
+}
+
+static void draw_aim_border(void)
+{
+    tft_fill_rect(PLAY_LEFT - 3U, PLAY_TOP - 3U,
+                  PLAY_RIGHT - PLAY_LEFT + 7U, 3U, TFT_RED);
+    tft_fill_rect(PLAY_LEFT - 3U, PLAY_BOTTOM,
+                  PLAY_RIGHT - PLAY_LEFT + 7U, 3U, TFT_RED);
+    tft_fill_rect(PLAY_LEFT - 3U, PLAY_TOP, 3U,
+                  PLAY_BOTTOM - PLAY_TOP, TFT_RED);
+    tft_fill_rect(PLAY_RIGHT, PLAY_TOP, 3U,
+                  PLAY_BOTTOM - PLAY_TOP, TFT_RED);
 }
 
 static void draw_aim_status(uint16_t remaining_tenths)
@@ -257,6 +273,11 @@ static void draw_aim_status(uint16_t remaining_tenths)
 static uint8_t player_hits_obstacle(void)
 {
     uint8_t index;
+    if (player_x <= PLAY_LEFT + 1U || player_x >= PLAY_RIGHT - 1U ||
+        player_y <= PLAY_TOP + 1U || player_y >= PLAY_BOTTOM - 1U)
+    {
+        return 1U;
+    }
     for (index = 0U; index < aim_obstacle_count; ++index)
     {
         if (player_x + 2U >= aim_obstacles[index].x &&
@@ -301,16 +322,16 @@ static void complete_aim_level(void)
 static void create_aim_obstacles(void)
 {
     uint8_t index;
-    aim_obstacle_count = (uint8_t)(2U + aim_level);
+    aim_obstacle_count = (uint8_t)(3U + aim_level);
     if (aim_obstacle_count > AIM_MAX_OBSTACLES) aim_obstacle_count = AIM_MAX_OBSTACLES;
     for (index = 0U; index < aim_obstacle_count; ++index)
     {
-        aim_obstacles[index].width = (uint16_t)(8U + next_random() % 18U);
-        aim_obstacles[index].height = (uint16_t)(6U + next_random() % 14U);
-        aim_obstacles[index].x = (uint16_t)(PLAY_LEFT + 8U +
-                                             next_random() % 105U);
-        aim_obstacles[index].y = (uint16_t)(PLAY_TOP + 8U +
-                                             next_random() % 68U);
+        aim_obstacles[index].width = (uint16_t)(12U + next_random() % 18U);
+        aim_obstacles[index].height = (uint16_t)(12U + next_random() % 20U);
+        aim_obstacles[index].x = (uint16_t)(PLAY_LEFT + 12U +
+                                             next_random() % 92U);
+        aim_obstacles[index].y = (uint16_t)(PLAY_TOP + 12U +
+                                             next_random() % 54U);
     }
 }
 
@@ -374,15 +395,16 @@ static void update_aim(JoystickState state)
     uint16_t old_x = player_x;
     uint16_t old_y = player_y;
     ++frame;
-    if (direction_is_up(state.direction) && player_y > PLAY_TOP + 4U) player_y -= 2U;
-    if (direction_is_down(state.direction) && player_y < PLAY_BOTTOM - 4U) player_y += 2U;
+    if (direction_is_up(state.direction) && player_y > PLAY_TOP + 1U) player_y -= 2U;
+    if (direction_is_down(state.direction) && player_y < PLAY_BOTTOM - 1U) player_y += 2U;
     if ((state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
-         state.direction == JOY_DOWN_LEFT) && player_x > PLAY_LEFT + 4U) player_x -= 2U;
+         state.direction == JOY_DOWN_LEFT) && player_x > PLAY_LEFT + 1U) player_x -= 2U;
     if ((state.direction == JOY_RIGHT || state.direction == JOY_UP_RIGHT ||
-         state.direction == JOY_DOWN_RIGHT) && player_x < PLAY_RIGHT - 4U) player_x += 2U;
+         state.direction == JOY_DOWN_RIGHT) && player_x < PLAY_RIGHT - 1U) player_x += 2U;
     if (old_x != player_x || old_y != player_y)
     {
         tft_fill_rect(old_x - 3U, old_y - 3U, 7U, 7U, TFT_BLACK);
+        draw_aim_border();
         draw_target();
         draw_aim_obstacles();
         tft_fill_rect(player_x - 2U, player_y - 2U, 5U, 5U, TFT_YELLOW);
@@ -423,19 +445,20 @@ static void draw_menu(void)
     tft_fill_rect(7U, 6U, 146U, 17U, TFT_NAVY);
     tft_draw_text(8U, 9U, "JAROSLAW RYBAK PWR", TFT_YELLOW, TFT_NAVY, 1U);
     tft_draw_text(20U, 34U, "WYBIERZ TRYB", TFT_WHITE, TFT_NAVY, 1U);
-    tft_fill_rect(12U, 44U, 136U, 14U, menu_item == 0U ? TFT_VIOLET : TFT_PANEL);
-    tft_fill_rect(12U, 61U, 136U, 14U, menu_item == 1U ? TFT_VIOLET : TFT_PANEL);
-    tft_fill_rect(12U, 78U, 136U, 14U, menu_item == 2U ? TFT_VIOLET : TFT_PANEL);
-    tft_fill_rect(12U, 95U, 136U, 14U, menu_item == 3U ? TFT_VIOLET : TFT_PANEL);
-    tft_draw_text(24U, 47U, "SNAKE", menu_item == 0U ? TFT_YELLOW : TFT_WHITE,
-                  menu_item == 0U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(24U, 64U, "KROPKA", menu_item == 1U ? TFT_YELLOW : TFT_WHITE,
-                  menu_item == 1U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(24U, 81U, "LABIRYNT", menu_item == 2U ? TFT_YELLOW : TFT_WHITE,
-                  menu_item == 2U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(24U, 98U, "CZUJNIKI", menu_item == 3U ? TFT_YELLOW : TFT_WHITE,
-                  menu_item == 3U ? TFT_VIOLET : TFT_PANEL, 1U);
-    tft_draw_text(28U, 115U, "GORA DOL  SW START", TFT_GREEN, TFT_NAVY, 1U);
+    tft_fill_rect(12U, 44U, 136U, 14U, menu_item == 0U ? TFT_BLUE : TFT_PANEL);
+    tft_fill_rect(12U, 61U, 136U, 14U, menu_item == 1U ? TFT_BLUE : TFT_PANEL);
+    tft_fill_rect(12U, 78U, 136U, 14U, menu_item == 2U ? TFT_BLUE : TFT_PANEL);
+    tft_fill_rect(12U, 95U, 136U, 14U, menu_item == 3U ? TFT_BLUE : TFT_PANEL);
+    tft_draw_text(24U, 47U, "SNAKE", TFT_WHITE,
+                  menu_item == 0U ? TFT_BLUE : TFT_PANEL, 1U);
+    tft_draw_text(24U, 64U, "KROPKA", TFT_WHITE,
+                  menu_item == 1U ? TFT_BLUE : TFT_PANEL, 1U);
+    tft_draw_text(24U, 81U, "LABIRYNT", TFT_WHITE,
+                  menu_item == 2U ? TFT_BLUE : TFT_PANEL, 1U);
+    tft_draw_text(24U, 98U, "LEDY ZYCIA", TFT_WHITE,
+                  menu_item == 3U ? TFT_BLUE : TFT_PANEL, 1U);
+    tft_draw_text(8U, 115U, "PRAWO CZUJNIKI  SW START",
+                  TFT_GREEN, TFT_NAVY, 1U);
 }
 
 static void draw_signed(uint16_t x, uint16_t y, int16_t value)
@@ -450,25 +473,21 @@ static void draw_sensor_menu(void)
     draw_header("CZUJNIKI");
     tft_draw_text(18U, 23U, "WYBIERZ TRYB", TFT_WHITE, TFT_NAVY, 1U);
     tft_fill_rect(12U, 38U, 136U, 15U,
-                  sensor_menu_item == 0U ? TFT_VIOLET : TFT_PANEL);
+                  sensor_menu_item == 0U ? TFT_BLUE : TFT_PANEL);
     tft_fill_rect(12U, 56U, 136U, 15U,
-                  sensor_menu_item == 1U ? TFT_VIOLET : TFT_PANEL);
+                  sensor_menu_item == 1U ? TFT_BLUE : TFT_PANEL);
     tft_fill_rect(12U, 74U, 136U, 15U,
-                  sensor_menu_item == 2U ? TFT_VIOLET : TFT_PANEL);
+                  sensor_menu_item == 2U ? TFT_BLUE : TFT_PANEL);
     tft_fill_rect(12U, 92U, 136U, 15U,
-                  sensor_menu_item == 3U ? TFT_VIOLET : TFT_PANEL);
+                  sensor_menu_item == 3U ? TFT_BLUE : TFT_PANEL);
     tft_draw_text(28U, 41U, "TELEMETRIA",
-                  sensor_menu_item == 0U ? TFT_YELLOW : TFT_WHITE,
-                  sensor_menu_item == 0U ? TFT_VIOLET : TFT_PANEL, 1U);
+                  TFT_WHITE, sensor_menu_item == 0U ? TFT_BLUE : TFT_PANEL, 1U);
     tft_draw_text(28U, 59U, "PAINT",
-                  sensor_menu_item == 1U ? TFT_YELLOW : TFT_WHITE,
-                  sensor_menu_item == 1U ? TFT_VIOLET : TFT_PANEL, 1U);
+                  TFT_WHITE, sensor_menu_item == 1U ? TFT_BLUE : TFT_PANEL, 1U);
     tft_draw_text(28U, 77U, "BALANS",
-                  sensor_menu_item == 2U ? TFT_YELLOW : TFT_WHITE,
-                  sensor_menu_item == 2U ? TFT_VIOLET : TFT_PANEL, 1U);
+                  TFT_WHITE, sensor_menu_item == 2U ? TFT_BLUE : TFT_PANEL, 1U);
     tft_draw_text(28U, 95U, "LEDY ZYCIA",
-                  sensor_menu_item == 3U ? TFT_YELLOW : TFT_WHITE,
-                  sensor_menu_item == 3U ? TFT_VIOLET : TFT_PANEL, 1U);
+                  TFT_WHITE, sensor_menu_item == 3U ? TFT_BLUE : TFT_PANEL, 1U);
     tft_draw_text(13U, 112U, "GORA DOL  SW WYBIERZ", TFT_GREEN, TFT_NAVY, 1U);
 }
 
@@ -884,10 +903,12 @@ static void draw_pause(void)
     tft_fill_rect(12U, 31U, 136U, 66U, TFT_PURPLE);
     tft_fill_rect(15U, 34U, 130U, 60U, TFT_PANEL);
     tft_draw_text(50U, 40U, "PAUZA", TFT_YELLOW, TFT_PANEL, 1U);
-    tft_draw_text(28U, 58U, pause_item == 0U ? "> WZNOW" : "  WZNOW",
-                  pause_item == 0U ? TFT_WHITE : TFT_CYAN, TFT_PANEL, 1U);
-    tft_draw_text(28U, 75U, pause_item == 1U ? "> MENU" : "  MENU",
-                  pause_item == 1U ? TFT_WHITE : TFT_CYAN, TFT_PANEL, 1U);
+    tft_fill_rect(24U, 56U, 112U, 14U, pause_item == 0U ? TFT_BLUE : TFT_PANEL);
+    tft_fill_rect(24U, 73U, 112U, 14U, pause_item == 1U ? TFT_BLUE : TFT_PANEL);
+    tft_draw_text(28U, 58U, "WZNOW", TFT_WHITE,
+                  pause_item == 0U ? TFT_BLUE : TFT_PANEL, 1U);
+    tft_draw_text(28U, 75U, "MENU", TFT_WHITE,
+                  pause_item == 1U ? TFT_BLUE : TFT_PANEL, 1U);
 }
 
 static void draw_game_over(void)
@@ -952,7 +973,8 @@ static void redraw_dodge(void)
                   TFT_NAVY, 1U);
     for (index = 0U; index < bomb_count; ++index)
     {
-        tft_fill_rect(bombs[index].x - 2U, bombs[index].y - 2U, 5U, 5U,
+        tft_fill_rect(bombs[index].x - BOMB_RADIUS,
+                      bombs[index].y - BOMB_RADIUS, BOMB_SIZE, BOMB_SIZE,
                       TFT_RED);
     }
     tft_fill_rect(player_x - 2U, player_y - 2U, 5U, 5U, TFT_YELLOW);
@@ -973,6 +995,7 @@ static void start_aim(uint32_t seed)
     tft_draw_text(104U, 21U, "POZ", TFT_CYAN, TFT_NAVY, 1U);
     tft_draw_uint(128U, 21U, aim_level, TFT_YELLOW, TFT_NAVY, 1U);
     draw_aim_status(aim_time_tenths);
+    draw_aim_border();
     draw_target();
     draw_aim_obstacles();
     tft_fill_rect(player_x - 2U, player_y - 2U, 5U, 5U, TFT_YELLOW);
@@ -989,6 +1012,7 @@ static void redraw_aim(void)
     tft_draw_text(104U, 21U, "POZ", TFT_CYAN, TFT_NAVY, 1U);
     tft_draw_uint(128U, 21U, aim_level, TFT_YELLOW, TFT_NAVY, 1U);
     draw_aim_status(remaining_tenths);
+    draw_aim_border();
     draw_target();
     draw_aim_obstacles();
     tft_fill_rect(player_x - 2U, player_y - 2U, 5U, 5U, TFT_YELLOW);
@@ -1106,7 +1130,8 @@ static void update_dodge(JoystickState state)
     uint16_t old_y = player_y;
     for (index = 0U; index < bomb_count; ++index)
     {
-        tft_fill_rect(bombs[index].x - 2U, bombs[index].y - 2U, 5U, 5U,
+        tft_fill_rect(bombs[index].x - BOMB_RADIUS,
+                      bombs[index].y - BOMB_RADIUS, BOMB_SIZE, BOMB_SIZE,
                       TFT_BLACK);
     }
     tft_fill_rect(old_x - 2U, old_y - 2U, 5U, 5U, TFT_BLACK);
@@ -1132,11 +1157,13 @@ static void update_dodge(JoystickState state)
             --index;
             continue;
         }
-        tft_fill_rect(bombs[index].x - 2U, bombs[index].y - 2U, 5U, 5U, TFT_RED);
-        if (player_x + 2U >= bombs[index].x - 2U &&
-            player_x - 2U <= bombs[index].x + 2U &&
-            player_y + 2U >= bombs[index].y - 2U &&
-            player_y - 2U <= bombs[index].y + 2U)
+        tft_fill_rect(bombs[index].x - BOMB_RADIUS,
+                      bombs[index].y - BOMB_RADIUS, BOMB_SIZE, BOMB_SIZE,
+                      TFT_RED);
+        if (player_x + 2U >= bombs[index].x - BOMB_RADIUS &&
+            player_x - 2U <= bombs[index].x + BOMB_RADIUS &&
+            player_y + 2U >= bombs[index].y - BOMB_RADIUS &&
+            player_y - 2U <= bombs[index].y + BOMB_RADIUS)
         {
             score = frame / 33U;
             if (lose_life_or_end() != 0U) start_dodge(next_random());
@@ -1148,34 +1175,39 @@ static void update_dodge(JoystickState state)
     {
         {
             uint8_t edge = (uint8_t)(next_random() % 4U);
+            uint8_t targeted = frame >= 180U && (frame % 120U) == 0U;
             if (edge == 0U)
             {
                 bombs[bomb_count].x = PLAY_LEFT;
-                bombs[bomb_count].y = (uint16_t)(PLAY_TOP + next_random() %
-                                                 (PLAY_BOTTOM - PLAY_TOP));
+                bombs[bomb_count].y = targeted ? player_y :
+                    (uint16_t)(PLAY_TOP + next_random() %
+                               (PLAY_BOTTOM - PLAY_TOP));
                 bombs[bomb_count].dx = 1;
                 bombs[bomb_count].dy = 0;
             }
             else if (edge == 1U)
             {
                 bombs[bomb_count].x = PLAY_RIGHT;
-                bombs[bomb_count].y = (uint16_t)(PLAY_TOP + next_random() %
-                                                 (PLAY_BOTTOM - PLAY_TOP));
+                bombs[bomb_count].y = targeted ? player_y :
+                    (uint16_t)(PLAY_TOP + next_random() %
+                               (PLAY_BOTTOM - PLAY_TOP));
                 bombs[bomb_count].dx = -1;
                 bombs[bomb_count].dy = 0;
             }
             else if (edge == 2U)
             {
-                bombs[bomb_count].x = (uint16_t)(PLAY_LEFT + next_random() %
-                                                 (PLAY_RIGHT - PLAY_LEFT));
+                bombs[bomb_count].x = targeted ? player_x :
+                    (uint16_t)(PLAY_LEFT + next_random() %
+                               (PLAY_RIGHT - PLAY_LEFT));
                 bombs[bomb_count].y = PLAY_TOP;
                 bombs[bomb_count].dx = 0;
                 bombs[bomb_count].dy = 1;
             }
             else
             {
-                bombs[bomb_count].x = (uint16_t)(PLAY_LEFT + next_random() %
-                                                 (PLAY_RIGHT - PLAY_LEFT));
+                bombs[bomb_count].x = targeted ? player_x :
+                    (uint16_t)(PLAY_LEFT + next_random() %
+                               (PLAY_RIGHT - PLAY_LEFT));
                 bombs[bomb_count].y = PLAY_BOTTOM;
                 bombs[bomb_count].dx = 0;
                 bombs[bomb_count].dy = -1;
@@ -1224,6 +1256,16 @@ void game_update(JoystickState state, uint32_t button_event)
     {
         if (state.direction != last_menu_direction)
         {
+            if (state.direction == JOY_RIGHT ||
+                state.direction == JOY_UP_RIGHT ||
+                state.direction == JOY_DOWN_RIGHT)
+            {
+                screen = GAME_SENSOR_MENU;
+                sensor_menu_item = 0U;
+                last_menu_direction = state.direction;
+                draw_sensor_menu();
+                return;
+            }
             if (direction_is_up(state.direction) || direction_is_down(state.direction))
             {
                 menu_item = (uint8_t)((menu_item +
@@ -1239,9 +1281,8 @@ void game_update(JoystickState state, uint32_t button_event)
             else if (menu_item == 2U) start_aim(state.x ^ ((uint32_t)state.y << 16));
             else
             {
-                screen = GAME_SENSOR_MENU;
-                sensor_menu_item = 0U;
-                draw_sensor_menu();
+                screen = GAME_LED_INFO;
+                draw_led_info();
             }
         }
         return;

@@ -19,10 +19,10 @@ odczyt odświeża się raz na sekundę, aby wartości były czytelne:
    bonusami punktowymi.
 2. **KROPKA** - żółta kropka unika czerwonych, pseudolosowych bomb. Bomb
    przybywa wraz z czasem.
-3. **LABIRYNT** - kropką trzeba przejść z punktu A do B bez dotknięcia ścian.
-   Gra ma dziesięć poziomów, a każdy kolejny jest trudniejszy.
-4. **CZUJNIKI** - test I2C oraz bieżące dane akcelerometru i żyroskopu z MPU6050.
-   Dostępne są telemetria, sensorowa gra **PAINT**, gra **BALANS** oraz test LED-ów.
+3. **LABIRYNT** - kropką trzeba precyzyjnie przejść z punktu A do B bez
+   dotknięcia ścian ani czerwonej krawędzi. Gra ma dziesięć poziomów.
+4. **LEDY ZYCIA** - ręczny test pięciu diod dostępny bezpośrednio w menu.
+   Menu **CZUJNIKI** otwiera się ruchem joysticka w prawo.
 
 ## Podłączenie elementów
 
@@ -82,12 +82,11 @@ diody wykonują krótki efekt migania.
 
 ### Menu główne
 
-- joystick góra/dół - wybór gry,
-- joystick góra/dół - wybór kafelka SNAKE, KROPKA, LABIRYNT albo CZUJNIKI,
-- kafelek CZUJNIKI otwiera podmenu: TELEMETRIA, PAINT, BALANS albo LEDY ZYCIA,
+- joystick góra/dół - wybór kafelka SNAKE, KROPKA, LABIRYNT albo LEDY ZYCIA,
+- joystick w prawo - otwarcie podmenu CZUJNIKI: TELEMETRIA, PAINT, BALANS
+  albo LEDY ZYCIA,
 - przycisk joysticka - start,
-- paleta interfejsu: granat, fiolet, cyjan i żółty,
-- zaznaczona pozycja jest pokazana na osobnym panelu z fioletową ramką.
+- zaznaczona pozycja ma niebieskie tło i jest uruchamiana przyciskiem.
 
 ### Pauza
 
