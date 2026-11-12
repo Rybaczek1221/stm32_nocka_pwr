@@ -181,8 +181,10 @@ otwiera menu CZUJNIKI, a ruch joysticka w lewo również kończy telemetrię.
 
 W menu głównym wybierz joystickiem pozycję **CZUJNIKI**, a następnie
 **PAINT** albo **BALANS**. Połóż płytkę płasko i nie poruszaj nią przez
-krótki moment, aż licznik dojdzie do 24 próbek. Program zapamiętuje średnią
-obu osi akcelerometru jako pozycję neutralną.
+krótki moment, aż licznik dojdzie do 5 próbek. Program zapamiętuje średnią
+obu osi akcelerometru jako pozycję neutralną oraz średni błąd spoczynkowy
+żyroskopu. Późniejsze odczyty gyro są pomniejszane o ten błąd i mają małą
+strefę martwą, więc przypadkowe drgania nie zmieniają koloru w PAINT.
 
 Każda oś jest przeliczana na wirtualną skalę 0--30 kroków. Pozycja 15 jest
 zawsze punktem startowym zapisanym podczas kalibracji, a 0 i 30 oznaczają

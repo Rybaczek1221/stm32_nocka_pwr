@@ -18,7 +18,8 @@
 #define FLIGHT_OBSTACLES 4U
 #define BOMB_SIZE 7U
 #define BOMB_RADIUS 3U
-#define FLIGHT_CALIBRATION_SAMPLES 24U
+#define FLIGHT_CALIBRATION_SAMPLES 5U
+#define GYRO_CALIBRATION_DEADZONE 350
 #define SENSOR_TILT_DEADZONE 700
 #define SENSOR_TILT_RANGE 10000
 #define SENSOR_VIRTUAL_STEPS 30
@@ -98,12 +99,18 @@ static uint8_t flight_calibration_samples;
 static uint8_t flight_calibration_valid;
 static int32_t flight_calibration_sum_y;
 static int32_t flight_calibration_sum_x;
+static int32_t flight_calibration_sum_gx;
+static int32_t flight_calibration_sum_gy;
+static int32_t flight_calibration_sum_gz;
 static int32_t flight_calibration_min_y;
 static int32_t flight_calibration_max_y;
 static int32_t flight_calibration_min_x;
 static int32_t flight_calibration_max_x;
 static int32_t flight_neutral_y;
 static int32_t flight_neutral_x;
+static int32_t gyro_neutral_x;
+static int32_t gyro_neutral_y;
+static int32_t gyro_neutral_z;
 static int32_t sensor_filtered_x;
 static int32_t sensor_filtered_y;
 static uint16_t balance_x;
@@ -136,6 +143,7 @@ static void update_balance(void);
 static void draw_balance(void);
 static void draw_sensor_menu(void);
 static void draw_led_info(void);
+static void apply_gyro_calibration(Mpu6050Data *data);
 
 static int32_t sensor_to_step(int32_t delta)
 {
@@ -170,12 +178,18 @@ static void reset_sensor_calibration(void)
     flight_calibration_valid = 0U;
     flight_calibration_sum_y = 0;
     flight_calibration_sum_x = 0;
+    flight_calibration_sum_gx = 0;
+    flight_calibration_sum_gy = 0;
+    flight_calibration_sum_gz = 0;
     flight_calibration_min_y = 32767;
     flight_calibration_max_y = -32768;
     flight_calibration_min_x = 32767;
     flight_calibration_max_x = -32768;
     flight_neutral_y = 0;
     flight_neutral_x = 0;
+    gyro_neutral_x = 0;
+    gyro_neutral_y = 0;
+    gyro_neutral_z = 0;
 }
 
 static void collect_sensor_calibration(void)
@@ -185,6 +199,9 @@ static void collect_sensor_calibration(void)
     {
         flight_calibration_sum_y += telemetry_data.accel_y;
         flight_calibration_sum_x += telemetry_data.accel_x;
+        flight_calibration_sum_gx += telemetry_data.gyro_x;
+        flight_calibration_sum_gy += telemetry_data.gyro_y;
+        flight_calibration_sum_gz += telemetry_data.gyro_z;
         if (telemetry_data.accel_y < flight_calibration_min_y)
             flight_calibration_min_y = telemetry_data.accel_y;
         if (telemetry_data.accel_y > flight_calibration_max_y)
@@ -196,6 +213,27 @@ static void collect_sensor_calibration(void)
         ++flight_calibration_valid;
     }
     ++flight_calibration_samples;
+}
+
+static void apply_gyro_calibration(Mpu6050Data *data)
+{
+    int32_t value;
+    if (data == NULL) return;
+    value = (int32_t)data->gyro_x - gyro_neutral_x;
+    if (value > 32767) value = 32767;
+    if (value < -32768) value = -32768;
+    data->gyro_x = (int16_t)(value > -GYRO_CALIBRATION_DEADZONE &&
+                             value < GYRO_CALIBRATION_DEADZONE ? 0 : value);
+    value = (int32_t)data->gyro_y - gyro_neutral_y;
+    if (value > 32767) value = 32767;
+    if (value < -32768) value = -32768;
+    data->gyro_y = (int16_t)(value > -GYRO_CALIBRATION_DEADZONE &&
+                             value < GYRO_CALIBRATION_DEADZONE ? 0 : value);
+    value = (int32_t)data->gyro_z - gyro_neutral_z;
+    if (value > 32767) value = 32767;
+    if (value < -32768) value = -32768;
+    data->gyro_z = (int16_t)(value > -GYRO_CALIBRATION_DEADZONE &&
+                             value < GYRO_CALIBRATION_DEADZONE ? 0 : value);
 }
 
 static uint8_t lose_life_or_end(void)
@@ -579,7 +617,7 @@ static void draw_flight_calibration(void)
     tft_draw_text(35U, 78U, "PROBKI", TFT_CYAN, TFT_NAVY, 1U);
     tft_draw_uint(78U, 78U, flight_calibration_samples,
                   TFT_YELLOW, TFT_NAVY, 1U);
-    tft_draw_text(93U, 78U, "/24", TFT_CYAN, TFT_NAVY, 1U);
+    tft_draw_text(93U, 78U, "/5", TFT_CYAN, TFT_NAVY, 1U);
 }
 
 static void draw_paint(void)
@@ -674,6 +712,12 @@ static void finish_flight_calibration(void)
                            flight_calibration_valid;
         flight_neutral_x = flight_calibration_sum_x /
                            flight_calibration_valid;
+        gyro_neutral_x = flight_calibration_sum_gx /
+                         flight_calibration_valid;
+        gyro_neutral_y = flight_calibration_sum_gy /
+                         flight_calibration_valid;
+        gyro_neutral_z = flight_calibration_sum_gz /
+                         flight_calibration_valid;
     }
     flight_calibrating = 0U;
     telemetry_ok = flight_calibration_valid != 0U;
@@ -747,6 +791,7 @@ static void update_paint(JoystickState state)
 
     if (telemetry_ok && mpu6050_read(&telemetry_data) == HAL_OK)
     {
+        apply_gyro_calibration(&telemetry_data);
         sensor_filtered_x += ((int32_t)telemetry_data.accel_x -
                               sensor_filtered_x) / 4;
         sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
@@ -791,6 +836,7 @@ static void update_balance(void)
         return;
     }
     telemetry_ok = 1U;
+    apply_gyro_calibration(&telemetry_data);
     sensor_filtered_x += ((int32_t)telemetry_data.accel_x -
                           sensor_filtered_x) / 4;
     sensor_filtered_y += ((int32_t)telemetry_data.accel_y -
@@ -825,14 +871,7 @@ static void update_flight(JoystickState state)
 
     if (flight_calibrating != 0U)
     {
-        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
-        if (telemetry_ok)
-        {
-            flight_calibration_sum_y += telemetry_data.accel_y;
-            flight_calibration_sum_x += telemetry_data.accel_x;
-            ++flight_calibration_valid;
-        }
-        ++flight_calibration_samples;
+        collect_sensor_calibration();
         draw_flight_calibration();
         if (flight_calibration_samples >= FLIGHT_CALIBRATION_SAMPLES)
         {
@@ -845,6 +884,7 @@ static void update_flight(JoystickState state)
     if ((frame & 1U) == 0U)
     {
         telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok) apply_gyro_calibration(&telemetry_data);
     }
     tilt_y = (int32_t)telemetry_data.accel_y - flight_neutral_y;
     if (!telemetry_ok)
@@ -1243,6 +1283,9 @@ void game_init(void)
     telemetry_data.gyro_x = 0;
     telemetry_data.gyro_y = 0;
     telemetry_data.gyro_z = 0;
+    gyro_neutral_x = 0;
+    gyro_neutral_y = 0;
+    gyro_neutral_z = 0;
     led_test_item = 0U;
     for (index = 0U; index < 5U; ++index) led_test_state[index] = 1U;
     lives_reset();
@@ -1408,6 +1451,7 @@ void game_update(JoystickState state, uint32_t button_event)
             return;
         }
         telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok) apply_gyro_calibration(&telemetry_data);
         if (telemetry_ok) ++telemetry_samples;
         if ((++telemetry_frame % 3U) == 0U)
         {

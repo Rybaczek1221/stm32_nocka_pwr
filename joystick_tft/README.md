@@ -133,7 +133,7 @@ CZUJNIKI, a ruch w lewo również opuszcza ekran telemetrii.
 
 Kropka maluje ekran wyłącznie na podstawie MPU6050. Przechylenie płytki
 steruje obiema osiami, a filtr i strefa martwa stabilizują pozycję. Kalibracja
-24 próbek zapisuje pozycję płaską jako neutralną. Pozycja 15 na wirtualnej
+5 próbek zapisuje pozycję płaską jako neutralną. Pozycja 15 na wirtualnej
 skali 0--30 jest środkiem pola. Obrót płytki zmienia kolor.
 
 ### BALANS
