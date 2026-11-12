@@ -169,6 +169,15 @@ z tabeli, bo odpowiada ona kolejności gaszenia.
 
 ## Kalibracja MPU6050 do gry
 
+### Pokaz telemetrii
+
+Ekran **CZUJNIKI** działa jako demonstrator na żywo. Opisy i ramka są
+rysowane tylko przy wejściu na ekran, natomiast co kilka cykli zmieniają się
+wyłącznie pola ACC/GYR, status I2C oraz mały wskaźnik przechyłu. Marker
+przesuwa się względem środka, więc można od razu pokazać młodzieży, że
+przechylenie płytki zmienia dane i sterowanie. Nie ma już migotania całego
+ekranu ani ponownego rysowania menu przy każdym odczycie.
+
 W menu głównym wybierz joystickiem pozycję **CZUJNIKI**, a następnie
 **PAINT** albo **BALANS**. Połóż płytkę płasko i nie poruszaj nią przez
 krótki moment, aż licznik dojdzie do 12 próbek. Program zapamiętuje średnią

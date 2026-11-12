@@ -123,9 +123,11 @@ skraca się limit czasu. Ukończenie poziomu dziesiątego kończy grę sukcesem.
 
 ### CZUJNIKI
 
-Ekran wykonuje test `WHO_AM_I`, pokazuje status `I2C TEST OK/ERROR`, identyfikator
-układu oraz liczbę poprawnie pobranych próbek. Pokazuje też `ACC X/Y/Z` oraz
-`GYR X/Y/Z`. Błąd oznacza brak odpowiedzi czujnika albo błąd magistrali.
+Ekran pokazuje dane MPU6050 w czasie rzeczywistym: `ACC X/Y/Z`, `GYR X/Y/Z`
+oraz kolorowy wskaźnik przechyłu. Układ ekranu jest rysowany tylko raz;
+odświeżane są wyłącznie pola liczbowe, status I2C i marker na wskaźniku.
+Żółta kropka pokazuje kierunek przechylenia względem środka, a czerwony status
+oznacza problem z magistralą.
 
 ### PAINT
 

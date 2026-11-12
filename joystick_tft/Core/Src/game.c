@@ -116,6 +116,7 @@ static void start_dodge(uint32_t seed);
 static void start_aim(uint32_t seed);
 static void start_aim_round(void);
 static void draw_telemetry(void);
+static void draw_telemetry_live(void);
 static void start_flight(uint32_t seed);
 static void update_flight(JoystickState state);
 static void redraw_flight(void);
@@ -432,26 +433,57 @@ static void draw_led_info(void)
 static void draw_telemetry(void)
 {
     draw_header("CZUJNIKI");
-    tft_draw_text(4U, 22U, telemetry_ok ? "I2C TEST OK" : "I2C TEST ERROR",
-                  telemetry_ok ? TFT_GREEN : TFT_RED, TFT_NAVY, 1U);
-    tft_draw_text(91U, 22U, "WHO", TFT_CYAN, TFT_NAVY, 1U);
-    tft_draw_uint(115U, 22U, telemetry_identity, TFT_YELLOW, TFT_NAVY, 1U);
+    tft_draw_text(4U, 22U, "MPU6050 LIVE", TFT_CYAN, TFT_NAVY, 1U);
+    tft_draw_text(112U, 22U, "WHO", TFT_CYAN, TFT_NAVY, 1U);
+    tft_draw_uint(136U, 22U, telemetry_identity, TFT_YELLOW, TFT_NAVY, 1U);
     tft_draw_text(8U, 39U, "ACC X", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(48U, 39U, telemetry_data.accel_x);
     tft_draw_text(8U, 55U, "ACC Y", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(48U, 55U, telemetry_data.accel_y);
     tft_draw_text(8U, 71U, "ACC Z", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(48U, 71U, telemetry_data.accel_z);
     tft_draw_text(88U, 39U, "GYR X", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(128U, 39U, telemetry_data.gyro_x);
     tft_draw_text(88U, 55U, "GYR Y", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(128U, 55U, telemetry_data.gyro_y);
     tft_draw_text(88U, 71U, "GYR Z", TFT_WHITE, TFT_NAVY, 1U);
-    draw_signed(128U, 71U, telemetry_data.gyro_z);
-    tft_draw_text(8U, 94U, "PROBKI", TFT_WHITE, TFT_NAVY, 1U);
-    tft_draw_uint(50U, 94U, telemetry_samples, TFT_YELLOW, TFT_NAVY, 1U);
-    tft_draw_text(8U, 110U, "< MENU  SW TEST",
+    tft_draw_text(8U, 94U, "PRZECHYLENIE X/Y", TFT_WHITE, TFT_NAVY, 1U);
+    tft_draw_text(8U, 110U, "< MENU  SW ODSWIEZ",
                   TFT_GREEN, TFT_NAVY, 1U);
+    draw_telemetry_live();
+}
+
+static void draw_telemetry_live(void)
+{
+    int32_t tilt_x;
+    int32_t tilt_y;
+    uint16_t marker_x;
+    uint16_t marker_y;
+
+    tft_fill_rect(42U, 37U, 42U, 10U, TFT_NAVY);
+    tft_fill_rect(42U, 53U, 42U, 10U, TFT_NAVY);
+    tft_fill_rect(42U, 69U, 42U, 10U, TFT_NAVY);
+    tft_fill_rect(122U, 37U, 38U, 10U, TFT_NAVY);
+    tft_fill_rect(122U, 53U, 38U, 10U, TFT_NAVY);
+    tft_fill_rect(122U, 69U, 38U, 10U, TFT_NAVY);
+    draw_signed(42U, 39U, telemetry_data.accel_x);
+    draw_signed(42U, 55U, telemetry_data.accel_y);
+    draw_signed(42U, 71U, telemetry_data.accel_z);
+    draw_signed(122U, 39U, telemetry_data.gyro_x);
+    draw_signed(122U, 55U, telemetry_data.gyro_y);
+    draw_signed(122U, 71U, telemetry_data.gyro_z);
+
+    tilt_x = (int32_t)telemetry_data.accel_x / 2048;
+    tilt_y = (int32_t)telemetry_data.accel_y / 2048;
+    if (tilt_x < -10) tilt_x = -10;
+    if (tilt_x > 10) tilt_x = 10;
+    if (tilt_y < -10) tilt_y = -10;
+    if (tilt_y > 10) tilt_y = 10;
+    marker_x = (uint16_t)(80 + tilt_x * 6);
+    marker_y = (uint16_t)(103 - tilt_y / 2);
+    tft_fill_rect(48U, 98U, 65U, 12U, TFT_PANEL);
+    tft_fill_rect(79U, 99U, 2U, 10U, TFT_GRID);
+    tft_fill_rect(49U, 103U, 63U, 2U, TFT_GRID);
+    tft_fill_rect(marker_x - 2U, marker_y - 2U, 5U, 5U,
+                  telemetry_ok ? TFT_YELLOW : TFT_RED);
+    tft_fill_rect(122U, 94U, 38U, 10U, TFT_NAVY);
+    tft_draw_text(122U, 95U, telemetry_ok ? "OK" : "ERROR",
+                  telemetry_ok ? TFT_GREEN : TFT_RED, TFT_NAVY, 1U);
 }
 
 static void draw_flight_calibration(void)
@@ -1318,11 +1350,11 @@ void game_update(JoystickState state, uint32_t button_event)
             draw_sensor_menu();
             return;
         }
-        if (button_event != 0U || (++telemetry_frame % 33U) == 0U)
+        telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
+        if (telemetry_ok) ++telemetry_samples;
+        if (button_event != 0U || (++telemetry_frame % 3U) == 0U)
         {
-            telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
-            if (telemetry_ok) ++telemetry_samples;
-            draw_telemetry();
+            draw_telemetry_live();
         }
         return;
     }
