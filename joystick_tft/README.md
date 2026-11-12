@@ -69,11 +69,11 @@ Każda dioda ma osobny rezystor szeregowy, a katodę należy podłączyć do GND
 
 | Dioda | GPIO | Kolor |
 |---|---|---|
-| Życie 1 | PC6 | czerwona |
-| Życie 2 | PC7 | czerwona |
+| Życie 1 | PC10 | czerwona |
+| Życie 2 | PC9 | czerwona |
 | Życie 3 | PC8 | żółta |
-| Życie 4 | PC9 | zielona |
-| Życie 5 | PC10 | zielona |
+| Życie 4 | PC7 | zielona |
+| Życie 5 | PC6 | zielona |
 
 Po utracie życia jedna dioda gaśnie. Po utracie ostatniego życia wszystkie
 diody wykonują krótki efekt migania.
@@ -142,8 +142,9 @@ Zielony cel zmienia położenie, a gracz zdobywa punkty za utrzymanie żółtej
 kropki w jego obrębie. Gra korzysta wyłącznie z danych MPU6050 i jest
 efektownym testem precyzji czujnika.
 
-W ekranie LEDY ZYCIA joystick góra/dół wybiera diodę, lewo/prawo przełącza
-jej stan, a przycisk wraca do menu CZUJNIKI.
+W ekranie LEDY ZYCIA joystick lewo/prawo wybiera diodę, góra/dół przełącza
+jej stan, a przycisk wraca do menu CZUJNIKI. Kolejność na ekranie od lewej
+to: czerwona, czerwona, żółta, zielona, zielona.
 
 ## Struktura kodu
 

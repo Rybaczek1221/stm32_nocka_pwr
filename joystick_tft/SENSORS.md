@@ -137,15 +137,15 @@ W projekcie czujnik może służyć do:
 
 W ekranie testowym LED-y są ułożone od lewej jako: **czerwona, czerwona,
 żółta, zielona, zielona**. Przy pełnym stanie życia świecą wszystkie, a po
-każdej utracie życia gaśnie kolejna dioda od PC6 do PC10.
+każdej utracie życia gaśnie kolejna dioda od prawej strony.
 
 | Dioda | Pin |
 |---|---|
-| Życie 1 | PC6 - czerwona |
-| Życie 2 | PC7 - czerwona |
+| Życie 1 | PC10 - czerwona |
+| Życie 2 | PC9 - czerwona |
 | Życie 3 | PC8 - żółta |
-| Życie 4 | PC9 - zielona |
-| Życie 5 | PC10 - zielona |
+| Życie 4 | PC7 - zielona |
+| Życie 5 | PC6 - zielona |
 
 Każda dioda musi mieć osobny rezystor szeregowy, np. 220–1 kOhm. Anodę
 łączymy przez rezystor z pinem STM32, a katodę z GND. Moduł `lives` gasi

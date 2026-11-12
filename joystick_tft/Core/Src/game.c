@@ -510,7 +510,7 @@ static void draw_led_info(void)
     }
     tft_draw_text(18U, 23U, "CZER CZER ZOL ZIEL ZIEL",
                   TFT_WHITE, TFT_NAVY, 1U);
-    tft_draw_text(12U, 103U, "GORA/DOL WYBOR  L/P STAN",
+    tft_draw_text(12U, 103U, "L/P WYBOR  G/D STAN",
                   TFT_GREEN, TFT_NAVY, 1U);
     tft_draw_text(34U, 116U, "SW MENU", TFT_GREEN, TFT_NAVY, 1U);
 }
@@ -1370,13 +1370,13 @@ void game_update(JoystickState state, uint32_t button_event)
     {
         if (state.direction != last_menu_direction)
         {
-            if (direction_is_up(state.direction) || direction_is_down(state.direction))
+            if (state.direction == JOY_LEFT || state.direction == JOY_RIGHT)
             {
                 led_test_item = (uint8_t)((led_test_item +
-                    (direction_is_down(state.direction) ? 1U : 4U)) % 5U);
+                    (state.direction == JOY_RIGHT ? 1U : 4U)) % 5U);
                 draw_led_info();
             }
-            else if (state.direction == JOY_LEFT || state.direction == JOY_RIGHT)
+            else if (direction_is_up(state.direction) || direction_is_down(state.direction))
             {
                 led_test_state[led_test_item] =
                     led_test_state[led_test_item] == 0U ? 1U : 0U;

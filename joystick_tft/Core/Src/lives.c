@@ -4,7 +4,7 @@
 
 static const uint16_t life_pins[LIFE_COUNT] =
 {
-    GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10
+    GPIO_PIN_10, GPIO_PIN_9, GPIO_PIN_8, GPIO_PIN_7, GPIO_PIN_6
 };
 static uint8_t lives_remaining;
 
