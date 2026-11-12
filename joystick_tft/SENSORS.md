@@ -176,7 +176,8 @@ rysowane tylko przy wejściu na ekran, natomiast co kilka cykli zmieniają się
 wyłącznie pola ACC/GYR, status I2C oraz mały wskaźnik przechyłu. Marker
 przesuwa się względem środka, więc można od razu pokazać młodzieży, że
 przechylenie płytki zmienia dane i sterowanie. Nie ma już migotania całego
-ekranu ani ponownego rysowania menu przy każdym odczycie.
+ekranu ani ponownego rysowania menu przy każdym odczycie. Przycisk `SW`
+otwiera menu CZUJNIKI, a ruch joysticka w lewo również kończy telemetrię.
 
 W menu głównym wybierz joystickiem pozycję **CZUJNIKI**, a następnie
 **PAINT** albo **BALANS**. Połóż płytkę płasko i nie poruszaj nią przez

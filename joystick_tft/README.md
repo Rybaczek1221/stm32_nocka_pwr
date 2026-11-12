@@ -127,7 +127,8 @@ Ekran pokazuje dane MPU6050 w czasie rzeczywistym: `ACC X/Y/Z`, `GYR X/Y/Z`
 oraz kolorowy wskaźnik przechyłu. Układ ekranu jest rysowany tylko raz;
 odświeżane są wyłącznie pola liczbowe, status I2C i marker na wskaźniku.
 Żółta kropka pokazuje kierunek przechylenia względem środka, a czerwony status
-oznacza problem z magistralą.
+oznacza problem z magistralą. Przycisk joysticka (`SW`) wraca do menu
+CZUJNIKI, a ruch w lewo również opuszcza ekran telemetrii.
 
 ### PAINT
 

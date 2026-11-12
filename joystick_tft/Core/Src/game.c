@@ -443,7 +443,7 @@ static void draw_telemetry(void)
     tft_draw_text(88U, 55U, "GYR Y", TFT_WHITE, TFT_NAVY, 1U);
     tft_draw_text(88U, 71U, "GYR Z", TFT_WHITE, TFT_NAVY, 1U);
     tft_draw_text(8U, 94U, "PRZECHYLENIE X/Y", TFT_WHITE, TFT_NAVY, 1U);
-    tft_draw_text(8U, 110U, "< MENU  SW ODSWIEZ",
+    tft_draw_text(8U, 110U, "SW MENU  LEWO WYJSCIE",
                   TFT_GREEN, TFT_NAVY, 1U);
     draw_telemetry_live();
 }
@@ -1343,6 +1343,12 @@ void game_update(JoystickState state, uint32_t button_event)
     }
     if (screen == GAME_TELEMETRY)
     {
+        if (button_event != 0U)
+        {
+            screen = GAME_SENSOR_MENU;
+            draw_sensor_menu();
+            return;
+        }
         if (state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
             state.direction == JOY_DOWN_LEFT)
         {
@@ -1352,7 +1358,7 @@ void game_update(JoystickState state, uint32_t button_event)
         }
         telemetry_ok = mpu6050_read(&telemetry_data) == HAL_OK;
         if (telemetry_ok) ++telemetry_samples;
-        if (button_event != 0U || (++telemetry_frame % 3U) == 0U)
+        if ((++telemetry_frame % 3U) == 0U)
         {
             draw_telemetry_live();
         }

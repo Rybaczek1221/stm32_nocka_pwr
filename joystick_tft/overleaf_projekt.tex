@@ -1,0 +1,220 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=false,
+    pdftitle={Noc Politechniki Wrocławskiej 2026},
+    pdfauthor={Jarosław Rybak}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Noc Politechniki Wrocławskiej 2026}
+\rhead{Jarosław Rybak}
+\cfoot{\thepage}
+
+\setlist[itemize]{leftmargin=1.2cm,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.2cm,itemsep=2pt,topsep=3pt}
+
+\newcommand{\sectiontitle}[1]{%
+    \section*{#1}
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2.1cm}
+    {\Huge\bfseries Noc Politechniki Wrocławskiej 2026\par}
+    \vspace{1.8cm}
+    {\Large Projekt interaktywnej konsoli do gier\par}
+    \vspace{2.2cm}
+    {\Large\bfseries Autor: Jarosław Rybak\par}
+    \vspace{0.3cm}
+    {\large Politechnika Wrocławska\par}
+    \vspace{1.8cm}
+    \begin{minipage}{0.78\textwidth}
+        \centering
+        \small
+        Projekt to mała konsola do gier z ekranem, joystickiem, diodami LED
+        i czujnikiem ruchu. Powstała jako ciekawy pokaz elektroniki,
+        programowania i działania urządzeń podczas Nocy Politechniki
+        Wrocławskiej 2026.
+
+        \vspace{0.5cm}
+
+        Użytkownik może poruszać się po menu, wybierać gry, sterować
+        klasycznymi trybami joystickiem oraz przechylać płytkę, aby
+        sterować kropką za pomocą czujnika MPU6050. Na osobnym ekranie
+        można obserwować dane czujnika w czasie rzeczywistym.
+    \end{minipage}
+    \vspace{1.3cm}
+
+    \begin{minipage}{0.78\textwidth}
+        \textbf{Projekt zawiera:}
+        \begin{itemize}
+            \item kolorowe menu i kilka gier zręcznościowych,
+            \item ekran TFT o rozdzielczości 160$\times$128 pikseli,
+            \item joystick analogowy i przycisk,
+            \item pięć diod LED pokazujących liczbę żyć,
+            \item czujnik ruchu MPU6050 z akcelerometrem i żyroskopem,
+            \item ekran telemetrii pokazujący działanie czujnika,
+            \item tryby PAINT i BALANS sterowane przechyleniem płytki.
+        \end{itemize}
+    \end{minipage}
+    \vfill
+    {\large 2026\par}
+\end{titlepage}
+
+\newpage
+\sectiontitle{Opcje menu i gry}
+
+\begin{itemize}
+    \item \textbf{SNAKE} -- klasyczny wąż porusza się po planszy z widoczną
+    kratką. Zjedzenie jedzenia zwiększa wynik, a okresowo pojawia się bonus
+    punktowy. Kolizja ze ścianą lub własnym ciałem kończy próbę.
+    \item \textbf{KROPKA} -- żółta kropka unika czerwonych bomb. Przeszkody
+    nadlatują z góry, dołu, lewej i prawej strony, a ich liczba rośnie
+    wraz z czasem.
+    \item \textbf{LABIRYNT} -- gracz prowadzi kropkę od punktu A do punktu B,
+    omijając czerwone ściany. Dostępnych jest dziesięć poziomów trudności,
+    z coraz mniejszym celem i krótszym limitem czasu.
+    \item \textbf{CZUJNIKI} -- osobne podmenu zawierające telemetrię,
+    sensorowy tryb PAINT, grę BALANS i test pięciu diod LED.
+\end{itemize}
+
+\subsection*{Tryby wykorzystujące czujnik ruchu}
+
+\textbf{PAINT} pozwala malować po ekranie przez przechylanie płytki.
+Na początku program zapamiętuje pozycję płaską. Dzięki temu kropka nie
+drży, kiedy urządzenie leży na stole. Obrót płytki może zmieniać kolor.
+
+\textbf{BALANS} to prosta próba zręczności. Zielony cel zmienia położenie,
+a punkty dostaje się za utrzymanie żółtej kropki w jego obrębie. Gra korzysta
+tylko z danych czujnika ruchu.
+
+\newpage
+
+\sectiontitle{Komponenty i połączenia}
+
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Element} & \textbf{Zastosowanie} \\
+\midrule
+NUCLEO-L476RG / STM32L476RG & Mikrokontroler wykonujący program konsoli \\
+ST7735S TFT, 160$\times$128 & Menu, gry, telemetria i wizualizacja przechyłu \\
+Analogowy joystick & Wybór pozycji, sterowanie klasycznymi grami i przycisk akcji \\
+Crowtail-MPU6050 & Akcelerometr i żyroskop do telemetrii oraz sterowania ruchem \\
+KAmodVL6180 & Czujnik odległości ToF, przygotowany do przyszłych gestów \\
+5 diod LED + rezystory & Wizualizacja liczby żyć i ręczny test wyjść GPIO \\
+Płytka stykowa i przewody & Wspólne zasilanie oraz porządkowanie połączeń \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Najważniejsze piny}
+
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Element} & \textbf{Pin STM32} & \textbf{Funkcja} \\
+\midrule
+Joystick VRx & PA0 & ADC1\_IN5, oś pozioma \\
+Joystick VRy & PA1 & ADC1\_IN6, oś pionowa \\
+Joystick SW & PB0 & Przycisk z wejściem pull-up \\
+MPU6050 i VL6180 & PB8 / PB9 & Wspólna magistrala I2C: SCL / SDA \\
+TFT MOSI / SCK & PC3 / PB10 & SPI2, dane i zegar \\
+TFT DC / CS / RST & PB11 / PB12 / PB2 & Sterowanie wyświetlaczem \\
+LED-y życia & PC6--PC10 & Wyjścia GPIO, osobny rezystor dla każdej LED \\
+\bottomrule
+\end{tabularx}
+
+Wszystkie moduły pracują ze wspólną masą. Układ jest zasilany z napięcia
+3,3 V, a każda dioda LED ma osobny rezystor szeregowy. MPU6050 i VL6180
+mogą współdzielić linie I2C, ponieważ mają różne typowe adresy:
+\texttt{0x68} oraz \texttt{0x29}.
+
+\sectiontitle{Jak elementy komunikują się ze sobą?}
+
+Najprościej można powiedzieć, że każdy pin jest małym połączeniem, przez
+które płynie informacja albo zasilanie. Pin może podawać stan niski lub
+wysoki, czyli w praktyce sygnał podobny do zera i jedynki. Dzięki temu
+mikrokontroler może włączyć diodę, sprawdzić przycisk albo przesłać dane
+do ekranu. Niektóre piny mają także dodatkowe zadania, na przykład mogą
+odczytywać napięcie z joysticka.
+
+\subsection*{Obraz na ekranie}
+
+Ekran TFT nie może otrzymać przypadkowego ciągu szybkich sygnałów. Musi
+wiedzieć, które dane są właśnie przesyłane i kiedy ma je odczytać. W tym
+projekcie obraz jest wysyłany przez SPI. Jedna linia przekazuje dane, druga
+ustala rytm przesyłania, a kolejne sygnały informują, do którego urządzenia
+trafiają dane i czy są one poleceniem, czy fragmentem obrazu. Ten rytm
+nazywa się zegarem. Można to porównać do podawania klocków w równych
+odstępach: ekran odbiera każdy klocek w odpowiednim momencie i składa z nich
+kolorowe piksele.
+
+\subsection*{Joystick i diody}
+
+Joystick ma dwie osie. Ich położenie zmienia napięcie, a mikrokontroler
+mierzy je za pomocą ADC. ADC zamienia napięcie na liczbę, dzięki czemu
+program rozpoznaje ruch w lewo, prawo, górę lub dół. Przycisk joysticka
+działa prościej: po naciśnięciu zmienia stan jednego pinu. Diody LED są
+sterowane sygnałami wyjściowymi. Program podaje stan wysoki, aby je zapalić,
+albo niski, aby je zgasić. Każda dioda ma własny rezystor, który ogranicza
+prąd i chroni zarówno diodę, jak i pin mikrokontrolera.
+
+\subsection*{Czujniki na wspólnej magistrali}
+
+MPU6050 i VL6180 korzystają z I2C. W tej metodzie dwa przewody są wspólne
+dla wielu urządzeń: jeden przenosi dane, a drugi pomaga ustalić ich rytm.
+Każdy czujnik ma własny adres, dlatego mikrokontroler może powiedzieć:
+„teraz odpowiada MPU6050”, a później „teraz odpowiada VL6180”. To pozwala
+podłączyć oba czujniki równolegle bez używania osobnych przewodów dla
+każdego z nich.
+
+Ważne jest również połączenie wspólnej masy. Wszystkie elementy muszą mieć
+wspólny punkt odniesienia, inaczej sygnały mogą być dla siebie
+niezrozumiałe. Dlatego w projekcie przewody GND modułów są połączone razem,
+a elementy są zasilane napięciem zgodnym z ich dokumentacją.
+
+\sectiontitle{Platforma i ciekawostki techniczne}
+
+Projekt został wykonany w programie \textbf{STM32CubeIDE 2.2.0}. Kod jest
+napisany w języku C dla płytki NUCLEO-L476RG z układem STM32L476RG.
+STM32 to mały komputer na jednej płytce, który wykonuje cały program.
+Ekran komunikuje się z nim przez SPI, joystick przez ADC, a czujniki przez
+I2C. Są to po prostu różne sposoby przesyłania informacji między elementami.
+
+\begin{itemize}
+    \item MPU6050 jest automatycznie wykrywany pod typowym adresem $0x68$
+    lub alternatywnym $0x69$.
+    \item Kalibracja zapisuje średnią z 12 próbek przy płasko położonej
+    płytce i traktuje ją jako pozycję neutralną.
+    \item Odczyty czujnika są wygładzane, dzięki czemu kropka nie drży
+    przy małych, przypadkowych ruchach.
+    \item Telemetria odświeża tylko zmieniające się pola liczbowe i marker
+    przechyłu, zamiast rysować cały ekran od początku.
+    \item Pięć LED-ów pokazuje życia w kolejności: czerwona, czerwona,
+    żółta, zielona, zielona.
+    \item Generator pseudolosowy tworzy pozycje jedzenia, bomb i celów bez
+    dodatkowych bibliotek.
+\end{itemize}
+
+\subsection*{Po co powstał projekt?}
+
+Projekt pokazuje, jak połączyć elektronikę z programowaniem. Osoba oglądająca
+może przechylić płytkę, zobaczyć zmianę danych na ekranie i od razu użyć
+tego ruchu w grze. Dzięki temu łatwiej zrozumieć, czym są czujniki,
+mikrokontrolery i programowanie urządzeń.
+
+\end{document}
