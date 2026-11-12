@@ -3,10 +3,11 @@
 #include "lives.h"
 #include "mpu6050.h"
 
-#define PLAY_TOP 28U
+#define PLAY_TOP 32U
 #define PLAY_LEFT 8U
 #define PLAY_RIGHT 151U
 #define PLAY_BOTTOM 123U
+#define AIM_PLAY_TOP 34U
 #define SNAKE_CELL 8U
 #define SNAKE_COLS 18U
 #define SNAKE_ROWS 11U
@@ -289,14 +290,14 @@ static void draw_aim_obstacles(void)
 
 static void draw_aim_border(void)
 {
-    tft_fill_rect(PLAY_LEFT - 3U, PLAY_TOP - 3U,
+    tft_fill_rect(PLAY_LEFT - 3U, AIM_PLAY_TOP - 3U,
                   PLAY_RIGHT - PLAY_LEFT + 7U, 3U, TFT_RED);
     tft_fill_rect(PLAY_LEFT - 3U, PLAY_BOTTOM,
                   PLAY_RIGHT - PLAY_LEFT + 7U, 3U, TFT_RED);
-    tft_fill_rect(PLAY_LEFT - 3U, PLAY_TOP, 3U,
-                  PLAY_BOTTOM - PLAY_TOP, TFT_RED);
-    tft_fill_rect(PLAY_RIGHT, PLAY_TOP, 3U,
-                  PLAY_BOTTOM - PLAY_TOP, TFT_RED);
+    tft_fill_rect(PLAY_LEFT - 3U, AIM_PLAY_TOP, 3U,
+                  PLAY_BOTTOM - AIM_PLAY_TOP, TFT_RED);
+    tft_fill_rect(PLAY_RIGHT, AIM_PLAY_TOP, 3U,
+                  PLAY_BOTTOM - AIM_PLAY_TOP, TFT_RED);
 }
 
 static void draw_aim_status(uint16_t remaining_tenths)
@@ -315,7 +316,7 @@ static uint8_t player_hits_obstacle(void)
 {
     uint8_t index;
     if (player_x <= PLAY_LEFT + 1U || player_x >= PLAY_RIGHT - 1U ||
-        player_y <= PLAY_TOP + 1U || player_y >= PLAY_BOTTOM - 1U)
+        player_y <= AIM_PLAY_TOP + 1U || player_y >= PLAY_BOTTOM - 1U)
     {
         return 1U;
     }
@@ -371,8 +372,8 @@ static void create_aim_obstacles(void)
         aim_obstacles[index].height = (uint16_t)(12U + next_random() % 20U);
         aim_obstacles[index].x = (uint16_t)(PLAY_LEFT + 12U +
                                              next_random() % 92U);
-        aim_obstacles[index].y = (uint16_t)(PLAY_TOP + 12U +
-                                             next_random() % 54U);
+        aim_obstacles[index].y = (uint16_t)(AIM_PLAY_TOP + 12U +
+                                             next_random() % 38U);
     }
 }
 
@@ -381,7 +382,7 @@ static void start_aim_round(void)
     player_x = PLAY_LEFT + 8U;
     player_y = PLAY_BOTTOM - 8U;
     target_x = PLAY_RIGHT - 8U;
-    target_y = PLAY_TOP + 10U;
+    target_y = AIM_PLAY_TOP + 10U;
     aim_time_tenths = (uint8_t)(120U - aim_level * 5U);
     aim_round_frames = 0U;
     create_aim_obstacles();
@@ -444,7 +445,7 @@ static void update_aim(JoystickState state)
     uint16_t old_x = player_x;
     uint16_t old_y = player_y;
     ++frame;
-    if (direction_is_up(state.direction) && player_y > PLAY_TOP + 1U) player_y -= 2U;
+    if (direction_is_up(state.direction) && player_y > AIM_PLAY_TOP + 1U) player_y -= 2U;
     if (direction_is_down(state.direction) && player_y < PLAY_BOTTOM - 1U) player_y += 2U;
     if ((state.direction == JOY_LEFT || state.direction == JOY_UP_LEFT ||
          state.direction == JOY_DOWN_LEFT) && player_x > PLAY_LEFT + 1U) player_x -= 2U;
